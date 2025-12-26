@@ -1,6 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Info } from "lucide-react";
+import {
+    Info,
+    LogOut,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 // import { useTheme } from "../context/ThemeContext"; // Removed theme context
 import LottieIcon from "./LottieIcon";
@@ -12,12 +15,10 @@ import upcomingData from "../assets/animations/upcoming.json";
 import analyticsData from "../assets/animations/analytics.json";
 import profileData from "../assets/animations/profile.json";
 import aiData from "../assets/animations/ai.json";
-import mainData from "../assets/animations/main.json";
-import userData from "../assets/animations/user.json";
 
 const Sidebar = () => {
     const { pathname } = useLocation();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
 
 
     const links = [
@@ -44,10 +45,7 @@ const Sidebar = () => {
                     </h1>
                 </div>
 
-                {/* Animated Graphic */}
-                <div className="-ml-6 -mt-8 mb-4 w-40 opacity-90">
-                    <LottieIcon animationData={mainData} size={160} />
-                </div>
+                {/* Animated Graphic Removed as requested */}
 
                 {/* User Profile Snippet */}
                 <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800/50 rounded-xl mb-2 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700/50 mt-[-20px]">
@@ -59,45 +57,63 @@ const Sidebar = () => {
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <LottieIcon animationData={userData} size={40} />
+                            <LottieIcon animationData={profileData} size={40} />
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate text-slate-800 dark:text-white">{user?.fullName || user?.displayName || "User"}</p>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-black text-slate-800 dark:text-white truncate tracking-tight">
+                                {user?.name || user?.fullName || user?.displayName || "Guest"}
+                            </h3>
+                            <div className="w-5 h-5 flex-shrink-0">
+                                <LottieIcon animationData={profileData} size={20} />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 px-4 space-y-2">
+            <div className="flex-1 px-4 space-y-3">
                 {links.map((link) => (
                     <NavLink
                         key={link.name}
                         to={link.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all relative group ${isActive
-                                ? "bg-teal-500 text-white shadow-lg shadow-teal-500/20"
+                            `flex items-center gap-5 px-6 py-4 rounded-2xl font-black transition-all relative group ${isActive
+                                ? "bg-teal-500 text-white shadow-xl shadow-teal-500/25 scale-[1.02]"
                                 : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
                             }`
                         }
                     >
-                        <div className="w-6 h-6 flex items-center justify-center">
+                        <div className="w-8 h-8 flex items-center justify-center">
                             {link.animation ? (
-                                <LottieIcon animationData={link.animation} size={24} />
+                                <LottieIcon animationData={link.animation} size={32} />
                             ) : (
                                 link.icon
                             )}
                         </div>
-                        <span className="tracking-wide">{link.name}</span>
+                        <span className="tracking-wide text-lg">{link.name}</span>
                         {link.path === pathname && (
                             <motion.div
                                 layoutId="sidebar-accent"
-                                className="absolute left-0 w-1 h-6 bg-white rounded-r-full"
+                                className="absolute left-0 w-1.5 h-8 bg-white rounded-r-full"
                             />
                         )}
                     </NavLink>
                 ))}
             </div>
 
+            <div className="p-6 mt-auto border-t border-slate-200 dark:border-slate-800">
+                <button
+                    onClick={logout}
+                    className="flex items-center gap-5 px-6 py-4 w-full rounded-2xl font-black transition-all text-red-500 hover:bg-red-500/10 text-lg"
+                >
+                    <div className="w-8 h-8 flex items-center justify-center">
+                        <LogOut size={28} />
+                    </div>
+                    <span>Logout</span>
+                </button>
+            </div>
         </div>
     );
 };

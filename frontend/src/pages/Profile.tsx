@@ -6,16 +6,15 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
     Save,
-    Shield, LogOut, Loader2, Key, MailCheck, Wallet
+    Shield, Loader2, Key, MailCheck, Wallet
 } from "lucide-react";
 import LottieIcon from "../components/LottieIcon";
 import profileData from "../assets/animations/profile.json";
-import userData from "../assets/animations/user.json";
 import ConfirmModal from "../components/ConfirmModal";
 import { Trash2 } from "lucide-react";
 
 const Profile = () => {
-    const { user, setUser, logout, deleteAccount } = useAuth();
+    const { user, setUser, deleteAccount } = useAuth();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [profile, setProfile] = useState({
@@ -140,99 +139,104 @@ const Profile = () => {
                             {user?.photoURL ? (
                                 <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="scale-125">
-                                    <LottieIcon animationData={userData} size={150} />
+                                <div className="scale-110">
+                                    <LottieIcon animationData={profileData} size={150} />
                                 </div>
                             )}
                         </div>
                         <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-tight mb-1">
                             {profile.name || "User"}
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">{profile.email}</p>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={logout}
-                                className="flex-1 py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-sm font-black transition-all border border-red-500/20 flex items-center justify-center gap-2 group/btn"
-                            >
-                                <LogOut size={18} className="group-hover/btn:-translate-x-1 transition-transform" />
-                                LOGOUT
-                            </button>
-                            <button
-                                onClick={() => setShowDeleteModal(true)}
-                                className="flex-1 py-4 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl text-sm font-black transition-all border border-rose-500/20 flex items-center justify-center gap-2 group/del"
-                            >
-                                <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
-                                DELETE ACC
-                            </button>
-                        </div>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{profile.email}</p>
                     </div>
 
-                    {/* Monthly Budget Section */}
-                    <div className="glass-card p-8 rounded-3xl border border-teal-500/20 shadow-lg shadow-teal-500/5 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-all duration-700" />
-                        <div className="flex items-center gap-3 mb-6 relative z-10">
-                            <div className="p-3 bg-teal-500/10 rounded-2xl text-teal-400">
-                                <Wallet size={24} />
+                    {/* Box 6: Danger Zone / Delete Account */}
+                    <div className="glass-card p-8 rounded-3xl border border-rose-500/10 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-rose-500/50" />
+                        <div className="flex flex-col gap-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400">
+                                    <Trash2 size={20} />
+                                </div>
+                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Danger Zone</h3>
                             </div>
-                            <h3 className="text-lg font-black text-white uppercase tracking-widest">Budget</h3>
-                        </div>
 
-                        <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/50 mb-6 relative z-10 shadow-inner">
-                            <p className="text-slate-500 text-[10px] font-black uppercase mb-3 tracking-[0.2em]">Monthly Limit</p>
-                            <div className="text-4xl font-black text-white flex items-baseline gap-2">
-                                <span className="text-2xl text-teal-500 font-bold">₹</span>
-                                <input
-                                    type="number"
-                                    className="bg-transparent border-none p-0 text-white focus:outline-none focus:ring-0 w-full"
-                                    value={profile.budget}
-                                    onChange={(e) => setProfile({ ...profile, budget: parseInt(e.target.value) || 0 })}
-                                />
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-500 font-bold italic leading-relaxed">
+                                    "Handle with care, bestie! This action is permanent. No cap." ✨💅🔥
+                                    "You can always create a new account if you change your mind."
+                                    "thanks for using our app!"
+                                </p>
+                                <button
+                                    onClick={() => setShowDeleteModal(true)}
+                                    disabled={deleting}
+                                    className="w-full py-4 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl text-sm font-black transition-all border border-rose-500/20 flex items-center justify-center gap-2 group/del"
+                                >
+                                    {deleting ? (
+                                        <Loader2 className="animate-spin" size={18} />
+                                    ) : (
+                                        <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
+                                    )}
+                                    DELETE ACCOUNT
+                                </button>
                             </div>
                         </div>
-
-                        <button
-                            onClick={handleUpdateProfile}
-                            disabled={updating}
-                            className="w-full py-4 bg-teal-600/20 hover:bg-teal-600 text-teal-400 hover:text-white font-black rounded-2xl border border-teal-500/20 transition-all hover:scale-[1.02] shadow-lg shadow-teal-500/10 relative z-10 uppercase text-xs tracking-widest"
-                        >
-                            {updating ? <Loader2 className="animate-spin inline mr-2" /> : "Save Limit"}
-                        </button>
                     </div>
                 </div>
 
-                {/* Right Column: Details & Security */}
-                <div className="lg:col-span-8 space-y-8">
-                    {/* Personal Details */}
-                    <div className="glass-card p-10 rounded-3xl relative overflow-hidden">
+                <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Box 1: Account Settings */}
+                    <div className="glass-card p-8 rounded-3xl border border-teal-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
                         <div className="absolute top-0 left-0 w-1 h-full bg-teal-500/50" />
-                        <div className="flex items-center gap-4 mb-10">
-                            <div className="p-3 bg-teal-500/10 rounded-2xl text-teal-400">
-                                <Shield size={24} />
+                        <div>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400">
+                                    <Shield size={20} />
+                                </div>
+                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Account</h3>
                             </div>
-                            <div>
-                                <h3 className="text-2xl font-black text-white uppercase tracking-wider">Account Settings</h3>
-                                <p className="text-slate-500 text-xs font-medium">Update your profile information</p>
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleUpdateProfile} className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Full Name</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all font-bold"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-teal-500 transition-all font-bold"
                                         value={profile.name}
                                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                                        required
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Date of Birth</label>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-teal-500 transition-all font-bold"
+                                        value={profile.dob}
+                                        onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-teal-600 text-white py-4 rounded-2xl font-black hover:bg-teal-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                            {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Account
+                        </button>
+                    </div>
+
+                    {/* Box 2: Contact Info */}
+                    <div className="glass-card p-8 rounded-3xl border border-blue-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
+                        <div>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400">
+                                    <MailCheck size={20} />
+                                </div>
+                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Contact</h3>
+                            </div>
+                            <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Email Address</label>
                                     <input
                                         type="email"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-6 py-4 text-white opacity-40 font-bold cursor-not-allowed"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white opacity-40 font-bold cursor-not-allowed"
                                         value={profile.email}
                                         disabled
                                     />
@@ -241,59 +245,71 @@ const Profile = () => {
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Phone Number</label>
                                     <input
                                         type="tel"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all font-bold"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500 transition-all font-bold"
                                         value={profile.phone}
                                         onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Date of Birth</label>
-                                    <input
-                                        type="date"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all font-bold"
-                                        value={profile.dob}
-                                        onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
-                                        required
                                     />
                                 </div>
                             </div>
-                            <div className="flex justify-end pt-4">
-                                <button type="submit" disabled={updating} className="bg-teal-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-teal-500 transition-all flex items-center gap-3 shadow-2xl shadow-teal-600/20 uppercase text-sm tracking-widest active:scale-95">
-                                    {updating ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />} Update Profile
-                                </button>
-                            </div>
-                        </form>
+                        </div>
+                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                            {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Contact
+                        </button>
                     </div>
 
-                    <div className="glass-card p-10 rounded-3xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400">
-                                <Key size={24} />
+                    {/* Box 3: Budget Settings */}
+                    <div className="glass-card p-8 rounded-3xl border border-emerald-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/50" />
+                        <div>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
+                                    <Wallet size={20} />
+                                </div>
+                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Budget</h3>
                             </div>
-                            <div>
+                            <div className="space-y-6">
+                                <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/50 shadow-inner">
+                                    <p className="text-slate-500 text-[10px] font-black uppercase mb-3 tracking-[0.2em]">Monthly Limit</p>
+                                    <div className="text-3xl font-black text-white flex items-baseline gap-2">
+                                        <span className="text-xl text-emerald-500 font-bold">₹</span>
+                                        <input
+                                            type="number"
+                                            className="bg-transparent border-none p-0 text-white focus:outline-none focus:ring-0 w-full"
+                                            value={profile.budget}
+                                            onChange={(e) => setProfile({ ...profile, budget: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-emerald-600 text-white py-4 rounded-2xl font-black hover:bg-emerald-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                            {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Budget
+                        </button>
+                    </div>
+
+                    {/* Box 4: Security */}
+                    <div className="glass-card p-8 rounded-3xl border border-indigo-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50" />
+                        <div>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
+                                    <Key size={20} />
+                                </div>
                                 <h3 className="text-xl font-black text-white uppercase tracking-wider">Security</h3>
-                                <p className="text-slate-500 text-xs font-medium">Protect your account access</p>
                             </div>
-                        </div>
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 bg-blue-500/5 rounded-3xl border border-blue-500/10">
-                            <div className="flex items-center gap-6">
-                                <div className="p-4 bg-blue-500/10 rounded-2xl">
-                                    <MailCheck className="text-blue-500" size={32} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Password Reset</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">Receive a secure link on your registered email to change your password.</p>
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                    Protect your account by regularly updating your password.
+                                </p>
+                                <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Status</p>
+                                    <p className="text-xs font-bold text-slate-300">Secure & Verified</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={handleResetPasswordEmail}
-                                className="w-full md:w-auto px-10 py-5 bg-blue-600/10 hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-600/20 rounded-2xl font-black transition-all flex items-center justify-center gap-3 uppercase text-xs tracking-widest"
-                            >
-                                <MailCheck size={20} /> Send Link
-                            </button>
                         </div>
+                        <button onClick={handleResetPasswordEmail} className="mt-8 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                            <MailCheck size={16} /> Send Reset Link
+                        </button>
                     </div>
                 </div>
             </div>
@@ -305,7 +321,7 @@ const Profile = () => {
                 title="Delete Account"
                 message="Are you sure you want to delete your account? This action is permanent and will delete all your data including expenses and incomes. You may need to login again before deleting for security reasons."
             />
-        </div>
+        </div >
     );
 };
 
