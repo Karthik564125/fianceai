@@ -11,7 +11,7 @@ import {
 import LottieIcon from "../components/LottieIcon";
 import profileData from "../assets/animations/profile.json";
 import ConfirmModal from "../components/ConfirmModal";
-import { Trash2, Camera, Lightbulb } from "lucide-react";
+import { Trash2, Camera } from "lucide-react";
 import { uploadImage } from "../services/cloudinary";
 
 const Profile = () => {
