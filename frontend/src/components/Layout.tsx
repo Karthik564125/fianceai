@@ -10,7 +10,7 @@ const Layout = () => {
             <div className="fixed bottom-[-10%] left-[-5%] w-96 h-96 bg-purple-500 rounded-full mix-blend-overlay filter blur-[128px] opacity-20 animate-blob animation-delay-2000 -z-10" />
 
             <Sidebar />
-            <div className="flex-1 ml-64 p-8 overflow-y-auto h-screen relative z-0">
+            <div className="flex-1 ml-80 p-8 pr-12 overflow-y-auto h-screen relative z-0 max-w-[calc(100vw-20rem)]">
                 <Outlet />
             </div>
         </div>

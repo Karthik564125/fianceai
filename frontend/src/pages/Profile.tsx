@@ -11,7 +11,8 @@ import {
 import LottieIcon from "../components/LottieIcon";
 import profileData from "../assets/animations/profile.json";
 import ConfirmModal from "../components/ConfirmModal";
-import { Trash2 } from "lucide-react";
+import { Trash2, Camera, Lightbulb } from "lucide-react";
+import { uploadImage } from "../services/cloudinary";
 
 const Profile = () => {
     const { user, setUser, deleteAccount } = useAuth();
@@ -26,6 +27,7 @@ const Profile = () => {
     });
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -73,11 +75,43 @@ const Profile = () => {
                 dob: profile.dob,
                 budget: profile.budget,
             });
-            setUser({ ...user, name: profile.name });
+            setUser({ ...user, name: profile.name, fullName: profile.name });
             toast.success("Profile updated successfully!");
         } catch (error) {
             console.error("Update error:", error);
             toast.error("Failed to update profile");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files[0] || !user?.uid) return;
+        const file = e.target.files[0];
+        setUploading(true);
+        try {
+            const photoURL = await uploadImage(file);
+            await updateDoc(doc(db, "users", user.uid), { photoURL });
+            setUser({ ...user, photoURL });
+            toast.success("Profile picture updated!");
+        } catch (error) {
+            console.error("Image upload error:", error);
+            toast.error("Failed to upload image");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDeleteImage = async () => {
+        if (!user?.uid) return;
+        setUpdating(true);
+        try {
+            await updateDoc(doc(db, "users", user.uid), { photoURL: "" });
+            setUser({ ...user, photoURL: "" });
+            toast.success("Profile picture removed");
+        } catch (error) {
+            console.error("Image delete error:", error);
+            toast.error("Failed to remove image");
         } finally {
             setUpdating(false);
         }
@@ -113,7 +147,7 @@ const Profile = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <Loader2 className="animate-spin text-teal-500" size={48} />
+                <Loader2 className="animate-spin text-primary" size={48} />
             </div>
         );
     }
@@ -121,7 +155,7 @@ const Profile = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-8 p-4">
             <div className="flex items-center gap-4 mb-8">
-                <div className="bg-indigo-500/10 p-3 rounded-2xl">
+                <div className="bg-primary/10 p-3 rounded-2xl">
                     <LottieIcon animationData={profileData} size={40} />
                 </div>
                 <div>
@@ -134,7 +168,7 @@ const Profile = () => {
                 {/* Left Column: Avatar & Quick Actions */}
                 <div className="lg:col-span-4 space-y-8">
                     <div className="glass-card p-10 rounded-3xl text-center relative overflow-hidden group shadow-xl">
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-500 to-blue-500" />
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-accent" />
                         <div className="w-36 h-36 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white dark:border-slate-900 shadow-2xl relative group overflow-hidden">
                             {user?.photoURL ? (
                                 <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
@@ -142,6 +176,21 @@ const Profile = () => {
                                 <div className="scale-110">
                                     <LottieIcon animationData={profileData} size={150} />
                                 </div>
+                            )}
+                        </div>
+
+                        {/* Action Buttons Below Photo */}
+                        <div className="flex items-center justify-center gap-4 mb-6">
+                            <label className="p-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl cursor-pointer transition-all border border-primary/20 group/cam flex items-center gap-2 px-6">
+                                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                                {uploading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                                <span className="text-[10px] font-black uppercase tracking-widest">Update</span>
+                            </label>
+                            {user?.photoURL && (
+                                <button onClick={handleDeleteImage} className="p-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-2xl transition-all border border-rose-500/20 group/trash flex items-center gap-2 px-6">
+                                    <Trash2 size={18} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Remove</span>
+                                </button>
                             )}
                         </div>
                         <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-tight mb-1">
@@ -163,9 +212,10 @@ const Profile = () => {
 
                             <div className="space-y-4">
                                 <p className="text-sm text-slate-500 font-bold italic leading-relaxed">
-                                    "Handle with care, bestie! This action is permanent. No cap." ✨💅🔥
-                                    "You can always create a new account if you change your mind."
-                                    "thanks for using our app!"
+                                    <h1>Deleting the account is permanent and cannot be undone.</h1>
+                                    <h1>You can always create a new account if you change your mind.</h1>
+                                    <h1>The data associated with the account will be permanently deleted.</h1>
+                                    <h1>Thanks for using our service.</h1>
                                 </p>
                                 <button
                                     onClick={() => setShowDeleteModal(true)}
@@ -182,15 +232,17 @@ const Profile = () => {
                             </div>
                         </div>
                     </div>
+
+
                 </div>
 
                 <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Box 1: Account Settings */}
-                    <div className="glass-card p-8 rounded-3xl border border-teal-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-teal-500/50" />
+                    <div className="glass-card p-8 rounded-3xl border border-primary/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-primary/50" />
                         <div>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400">
+                                <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
                                     <Shield size={20} />
                                 </div>
                                 <h3 className="text-xl font-black text-white uppercase tracking-wider">Account</h3>
@@ -200,7 +252,7 @@ const Profile = () => {
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Full Name</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-teal-500 transition-all font-bold"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary transition-all font-bold"
                                         value={profile.name}
                                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                                     />
@@ -209,24 +261,24 @@ const Profile = () => {
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Date of Birth</label>
                                     <input
                                         type="date"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-teal-500 transition-all font-bold"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary transition-all font-bold"
                                         value={profile.dob}
                                         onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
                                     />
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-teal-600 text-white py-4 rounded-2xl font-black hover:bg-teal-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
-                            {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Account
+                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-primary text-white py-4 rounded-2xl font-black hover:bg-primary/90 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                            {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Details
                         </button>
                     </div>
 
                     {/* Box 2: Contact Info */}
-                    <div className="glass-card p-8 rounded-3xl border border-blue-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
+                    <div className="glass-card p-8 rounded-3xl border border-accent/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-accent/50" />
                         <div>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400">
+                                <div className="p-2.5 bg-accent/10 rounded-xl text-accent">
                                     <MailCheck size={20} />
                                 </div>
                                 <h3 className="text-xl font-black text-white uppercase tracking-wider">Contact</h3>
@@ -245,14 +297,14 @@ const Profile = () => {
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Phone Number</label>
                                     <input
                                         type="tel"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-accent transition-all font-bold"
                                         value={profile.phone}
                                         onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                                     />
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-accent text-white py-4 rounded-2xl font-black hover:bg-accent/90 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
                             {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Contact
                         </button>
                     </div>
@@ -288,11 +340,11 @@ const Profile = () => {
                     </div>
 
                     {/* Box 4: Security */}
-                    <div className="glass-card p-8 rounded-3xl border border-indigo-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50" />
+                    <div className="glass-card p-8 rounded-3xl border border-primary/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-primary/50" />
                         <div>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
+                                <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
                                     <Key size={20} />
                                 </div>
                                 <h3 className="text-xl font-black text-white uppercase tracking-wider">Security</h3>
@@ -301,13 +353,13 @@ const Profile = () => {
                                 <p className="text-sm text-slate-500 font-medium leading-relaxed">
                                     Protect your account by regularly updating your password.
                                 </p>
-                                <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Status</p>
+                                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Status</p>
                                     <p className="text-xs font-bold text-slate-300">Secure & Verified</p>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleResetPasswordEmail} className="mt-8 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                        <button onClick={handleResetPasswordEmail} className="mt-8 w-full bg-primary text-white py-4 rounded-2xl font-black hover:bg-primary/90 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
                             <MailCheck size={16} /> Send Reset Link
                         </button>
                     </div>

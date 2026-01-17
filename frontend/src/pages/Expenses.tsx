@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { Plus, Trash2, X, DollarSign, Calendar, Loader } from "lucide-react";
+import { Plus, Trash2, X, DollarSign, Calendar, Loader, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import LottieIcon from "../components/LottieIcon";
 import expensesData from "../assets/animations/expenses.json";
@@ -19,6 +19,8 @@ interface Expense {
 const Expenses = () => {
     const { user } = useAuth();
     const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [budget, setBudget] = useState<number>(0);
+    const [totalExpense, setTotalExpense] = useState<number>(0);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ amount: "", category: "Food", description: "", date: "" });
     const [loading, setLoading] = useState(true);
@@ -26,44 +28,68 @@ const Expenses = () => {
 
     const categories = ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Shopping", "Health", "Other"];
 
-    const fetchExpenses = async () => {
+    const fetchData = async () => {
         if (!user?.uid) return;
         try {
+            // Fetch Expenses
             const q = query(collection(db, "expenses"), where("userId", "==", user.uid));
             const querySnapshot = await getDocs(q);
             const data = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as Expense[];
-            setExpenses(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            const sortedData = data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setExpenses(sortedData);
+
+            // Calculate Total
+            const total = sortedData.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+            setTotalExpense(total);
+
+            // Fetch Budget
+            const userRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userRef);
+            setBudget(userDoc.data()?.budget || 0);
+
         } catch (err) {
             console.error(err);
-            toast.error("Failed to load expenses");
+            toast.error("Failed to load data");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchExpenses();
+        fetchData();
     }, [user?.uid]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.uid) return;
         try {
+            const amount = parseFloat(formData.amount);
             await addDoc(collection(db, "expenses"), {
                 userId: user.uid,
-                amount: parseFloat(formData.amount),
+                amount: amount,
                 category: formData.category,
                 description: formData.description,
                 date: formData.date,
                 createdAt: new Date().toISOString()
             });
+
             setShowModal(false);
             setFormData({ amount: "", category: "Food", description: "", date: "" });
-            fetchExpenses();
-            toast.success("Expense added successfully!");
+            await fetchData();
+
+            const remaining = budget - (totalExpense + amount);
+            if (budget > 0) {
+                if (remaining < 0) {
+                    toast.error(`Budget Exceeded! You are ₹${Math.abs(remaining).toLocaleString()} over.`);
+                } else {
+                    toast.success(`Expense added! ₹${remaining.toLocaleString()} budget left.`);
+                }
+            } else {
+                toast.success("Expense added successfully!");
+            }
         } catch (err) {
             toast.error("Failed to add expense");
         }
@@ -73,7 +99,7 @@ const Expenses = () => {
         if (!deleteId) return;
         try {
             await deleteDoc(doc(db, "expenses", deleteId));
-            fetchExpenses();
+            await fetchData();
             toast.success("Expense deleted");
             setDeleteId(null);
         } catch (err) {
@@ -81,9 +107,11 @@ const Expenses = () => {
         }
     };
 
+    const budgetStatus = budget > 0 ? (budget - totalExpense) : null;
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div className="flex items-center gap-4">
                     <div className="bg-red-500/10 p-3 rounded-2xl">
                         <LottieIcon animationData={expensesData} size={40} />
@@ -93,12 +121,23 @@ const Expenses = () => {
                         <p className="text-slate-500 dark:text-slate-400">Track and manage your spending.</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                    <Plus size={20} /> Add Expense
-                </button>
+
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    {budgetStatus !== null && (
+                        <div className={`px-4 py-2 rounded-xl border flex items-center gap-2 ${budgetStatus < 0 ? 'bg-red-500/10 border-red-500/20 text-red-500 font-bold animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>
+                            {budgetStatus < 0 ? <AlertTriangle size={18} /> : <DollarSign size={18} />}
+                            <span>
+                                {budgetStatus < 0 ? `Exceeded by ₹${Math.abs(budgetStatus).toLocaleString()}` : `Budget Left: ₹${budgetStatus.toLocaleString()}`}
+                            </span>
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold shadow-lg shadow-red-600/20"
+                    >
+                        <Plus size={20} /> Add Expense
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -112,7 +151,7 @@ const Expenses = () => {
                     <p className="text-slate-400 mt-2">Track where your money goes by adding an expense.</p>
                 </div>
             ) : (
-                <div className="glass-card overflow-hidden rounded-2xl">
+                <div className="glass-card overflow-hidden rounded-2xl border border-slate-700/50">
                     <table className="w-full">
                         <thead className="bg-slate-800/50 text-slate-400 text-left text-sm uppercase tracking-wider">
                             <tr>
@@ -128,7 +167,7 @@ const Expenses = () => {
                                 <tr key={expense.id} className="hover:bg-slate-800/30 transition-colors group">
                                     <td className="py-4 pl-6 font-medium text-slate-200 flex items-center gap-3">
                                         <div className="p-2 bg-red-500/10 rounded-lg text-red-400">
-                                            <div className="w-4 h-4 rounded-full bg-current opacity-50" />
+                                            <div className="w-2 h-2 rounded-full bg-current" />
                                         </div>
                                         {expense.category}
                                     </td>
@@ -139,7 +178,7 @@ const Expenses = () => {
                                             {new Date(expense.date).toLocaleDateString()}
                                         </div>
                                     </td>
-                                    <td className="py-4 pr-6 text-right font-bold text-red-400 text-lg">-₹{expense.amount}</td>
+                                    <td className="py-4 pr-6 text-right font-bold text-red-400 text-lg">-₹{expense.amount.toLocaleString()}</td>
                                     <td className="py-4 pr-6 text-right">
                                         <button onClick={() => setDeleteId(expense.id)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
                                             <Trash2 size={18} />
@@ -176,7 +215,7 @@ const Expenses = () => {
                                             required
                                             value={formData.amount}
                                             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-bold"
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -190,10 +229,10 @@ const Expenses = () => {
                                                 key={cat}
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, category: cat })}
-                                                className={`py-2 rounded-xl text-sm font-medium transition-all ${formData.category === cat
-                                                    ? 'bg-red-500 text-white'
-                                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                                    }`}
+                                                className={`py-2 rounded-xl text-xs font-black transition-all border ${formData.category === cat
+                                                    ? 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20'
+                                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:border-slate-600'
+                                                    } `}
                                             >
                                                 {cat}
                                             </button>
@@ -225,7 +264,7 @@ const Expenses = () => {
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-red-600 hover:bg-red-500 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-red-600/20"
+                                    className="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-2xl font-black transition-all shadow-xl shadow-red-600/30 text-lg mt-2"
                                 >
                                     Save Expense
                                 </button>

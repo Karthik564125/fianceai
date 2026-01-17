@@ -1,207 +1,123 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare } from "lucide-react";
-import LottieIcon from "../components/LottieIcon";
-import aiData from "../assets/animations/ai.json";
-import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
-
-type ChatMessage = {
-    role: "user" | "ai";
-    text: string;
-};
+import { useAuth } from "../context/AuthContext";
+import { MessageSquare, Send } from "lucide-react";
+import LottieIcon from "../components/LottieIcon";
+import aiData from "../assets/animations/ai.json";
+import ReactMarkdown from "react-markdown";
 
 const Chatbot = () => {
     const { user } = useAuth();
-    const [input, setInput] = useState("");
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [financeData, setFinanceData] = useState<any>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    const [chatInput, setChatInput] = useState("");
+    const [chatMessages, setChatMessages] = useState<any[]>([]);
+    const [chatLoading, setChatLoading] = useState(false);
+    const [financialData, setFinancialData] = useState<any>(null);
+    const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    const fetchUserFinanceData = async () => {
-        if (!user?.uid) return;
-        try {
-            const incomeQuery = query(collection(db, "incomes"), where("userId", "==", user.uid));
-            const incomeSnapshot = await getDocs(incomeQuery);
+        const fetchContext = async () => {
+            if (!user?.uid) return;
+            const incomeSnapshot = await getDocs(query(collection(db, "incomes"), where("userId", "==", user.uid)));
             const totalIncome = incomeSnapshot.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
-
-            const expenseQuery = query(collection(db, "expenses"), where("userId", "==", user.uid));
-            const expenseSnapshot = await getDocs(expenseQuery);
+            const expenseSnapshot = await getDocs(query(collection(db, "expenses"), where("userId", "==", user.uid)));
             const totalExpense = expenseSnapshot.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
-
             const userDoc = await getDoc(doc(db, "users", user.uid));
             const budget = userDoc.data()?.budget || 0;
-
-            const savings = totalIncome - totalExpense;
-            const budgetUsedPercentage = budget > 0 ? (totalExpense / budget) * 100 : 0;
-
-            setFinanceData({
-                totalIncome,
-                totalExpense,
-                savings,
-                budget,
-                budgetUsedPercentage
-            });
-        } catch (err) {
-            console.error("Error fetching finance data for AI:", err);
-        }
-    };
-
-    useEffect(() => {
-        fetchUserFinanceData();
+            setFinancialData({ totalIncome, totalExpense, budget, savings: totalIncome - totalExpense });
+        };
+        fetchContext();
     }, [user?.uid]);
 
-    const handleSend = async () => {
-        if (!input.trim() || loading) return;
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chatMessages]);
 
-        const userMessage = input;
-        setInput("");
-        setLoading(true);
-
-        // show user message immediately
-        setMessages((prev: ChatMessage[]) => [...prev, { role: "user", text: userMessage }]);
-
+    const handleSendChat = async () => {
+        if (!chatInput.trim() || chatLoading) return;
+        const userMsg = chatInput;
+        setChatInput("");
+        setChatMessages(prev => [...prev, { role: "user", text: userMsg }]);
+        setChatLoading(true);
         try {
-            const summary = financeData || {
-                totalIncome: 0,
-                totalExpense: 0,
-                savings: 0,
-                budget: 0,
-                budgetUsedPercentage: 0
-            };
-
-            const res = await fetch("/api/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    question: userMessage,
-                    summary,
-                }),
-            });
-
-            // Check if response is actually JSON before parsing
-            const contentType = res.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-                let errorMsg = "The AI server is not running locally. ";
-                if (window.location.hostname === "localhost") {
-                    errorMsg += "Please use 'vercel dev' instead of 'npm run dev' to test the chatbot locally.";
-                } else {
-                    errorMsg += "Server error (non-JSON response).";
-                }
-                throw new Error(errorMsg);
-            }
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to fetch AI response");
-            }
-
-            setMessages((prev: ChatMessage[]) => [
-                ...prev,
-                { role: "ai", text: data.reply || "No response from AI." },
-            ]);
+            const { sendChatMessage } = await import("../services/chatService");
+            const reply = await sendChatMessage(userMsg, financialData);
+            setChatMessages(prev => [...prev, { role: "ai", text: reply }]);
         } catch (err: any) {
-            console.error("Chatbot Error:", err);
-            setMessages((prev: ChatMessage[]) => [
-                ...prev,
-                { role: "ai", text: err.message || "Something went wrong. Try again." },
-            ]);
+            setChatMessages(prev => [...prev, { role: "ai", text: "Failed to reach AI. Please try again." }]);
         } finally {
-            setLoading(false);
+            setChatLoading(false);
         }
     };
 
     return (
-        <div className="flex flex-col items-center justify-start min-h-[80vh] text-center px-4">
-            {/* AI Animation Header */}
-            <div className="bg-teal-500/10 p-6 rounded-full mb-6 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-teal-500/20 blur-2xl group-hover:bg-teal-500/30 transition-all duration-500" />
-                <LottieIcon animationData={aiData} size={180} />
-            </div>
-
-            <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-2">
-                FinanceAI Chatbot
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-8">
-                Ask anything about your expenses, savings, investments, or financial planning.
-            </p>
-
-            {/* Feature Cards */}
-            <div className="mb-8 flex flex-wrap justify-center gap-4">
-                <div className="glass-card p-4 rounded-xl flex items-center gap-3">
-                    <MessageSquare className="text-teal-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                        Natural Language Queries
-                    </span>
-                </div>
-                <div className="glass-card p-4 rounded-xl flex items-center gap-3">
-                    <MessageSquare className="text-teal-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                        Smart Financial Insights
-                    </span>
+        <div className="h-[calc(100vh-100px)] flex flex-col">
+            <div className="mb-8 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="bg-teal-500/10 p-3 rounded-2xl border border-teal-500/20">
+                        <LottieIcon animationData={aiData} size={48} />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800 dark:text-white">AI Financial Assistant</h1>
+                        <p className="text-slate-500 dark:text-slate-400">Ask anything about your budget, savings, or investments.</p>
+                    </div>
                 </div>
             </div>
 
-            {/* Chat Container */}
-            <div className="w-full max-w-2xl flex flex-col">
-                {/* Messages */}
-                <div className="flex-1 space-y-4 mb-4 text-left">
-                    {messages.length === 0 && (
-                        <div className="text-slate-400 text-center">
-                            Try asking:
-                            <br />
-                            “How much did I save this month?”
-                            <br />
-                            “Where should I invest?”
+            <div className="flex-1 glass-card rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-2xl relative">
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                    {chatMessages.length === 0 && (
+                        <div className="h-full flex flex-col items-center justify-center opacity-40 text-center px-10">
+                            <div className="p-6 bg-teal-500/5 rounded-full mb-6 relative">
+                                <div className="absolute inset-0 bg-teal-500/10 blur-2xl rounded-full" />
+                                <MessageSquare size={80} className="text-teal-400 relative z-10" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">How can I help you today?</h3>
+                            <p className="text-slate-400 max-w-md">"What is my current savings?" or "How much have I spent on food this month?"</p>
                         </div>
                     )}
 
-                    {messages.map((msg: ChatMessage, index: number) => (
-                        <div
-                            key={index}
-                            className={`max-w-[80%] p-4 rounded-xl ${msg.role === "user"
-                                ? "ml-auto bg-teal-500 text-white"
-                                : "mr-auto bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white"
-                                }`}
-                        >
-                            {msg.text}
+                    {chatMessages.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                            <div className={`max-w-[80%] p-4 rounded-2xl shadow-lg ${msg.role === "user"
+                                ? "bg-teal-600 text-white shadow-teal-600/20"
+                                : "bg-slate-800/80 border border-slate-700/50 text-slate-200"
+                                }`}>
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                                </div>
+                            </div>
                         </div>
                     ))}
 
-                    {loading && (
-                        <div className="mr-auto bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white p-4 rounded-xl">
-                            AI is thinking…
+                    {chatLoading && (
+                        <div className="flex gap-2 items-center text-xs text-teal-500 font-black uppercase tracking-widest bg-teal-500/5 py-2 px-4 rounded-full w-fit animate-pulse">
+                            <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" />
+                            AI is thinking
                         </div>
                     )}
-                    <div ref={messagesEndRef} />
+                    <div ref={chatEndRef} />
                 </div>
 
-                {/* Input */}
-                <div className="flex gap-2">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                        placeholder="Ask about savings, investments, budget..."
-                        className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none"
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={loading}
-                        className="px-5 py-3 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-600 transition disabled:opacity-50"
-                    >
-                        Send
-                    </button>
+                {/* Input Area */}
+                <div className="p-4 bg-slate-900/80 border-t border-slate-700/50 backdrop-blur-xl">
+                    <div className="max-w-4xl mx-auto flex gap-3">
+                        <input
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                            placeholder="Type your message here..."
+                            className="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500/50 text-white placeholder:text-slate-600 transition-all text-lg font-medium"
+                        />
+                        <button
+                            onClick={handleSendChat}
+                            disabled={chatLoading}
+                            className="bg-teal-600 hover:bg-teal-500 text-white p-4 rounded-2xl transition-all disabled:opacity-50 shadow-xl shadow-teal-600/30 group"
+                        >
+                            <Send size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

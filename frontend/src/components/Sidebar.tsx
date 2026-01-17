@@ -1,13 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-    Info,
-    LogOut,
-} from "lucide-react";
+import { Info, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-// import { useTheme } from "../context/ThemeContext"; // Removed theme context
 import LottieIcon from "./LottieIcon";
 
+import mainData from "../assets/animations/main.json";
 import homeData from "../assets/animations/home.json";
 import expensesData from "../assets/animations/expenses.json";
 import incomeData from "../assets/animations/income.json";
@@ -19,7 +16,6 @@ import aiData from "../assets/animations/ai.json";
 const Sidebar = () => {
     const { pathname } = useLocation();
     const { user, logout } = useAuth();
-
 
     const links = [
         { name: "Dashboard", path: "/", animation: homeData },
@@ -33,70 +29,73 @@ const Sidebar = () => {
     ];
 
     return (
-        <div className="h-screen w-64 bg-slate-100 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 z-50 flex flex-col fixed left-0 top-0 transition-colors duration-300">
+        <div className="h-screen w-72 bg-slate-100 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 z-50 flex flex-col fixed left-0 top-0 transition-all duration-300">
             {/* Logo Area */}
-            <div className="p-6 relative">
-                <div className="flex items-center gap-3 mb-6 relative z-10">
-                    <div className="absolute -top-6 -left-6 w-32 h-32 opacity-20 pointer-events-none">
-                        <div className="w-full h-full bg-teal-500 rounded-full blur-3xl animate-pulse" />
+            <div className="p-8 pb-4 relative">
+                <div className="flex flex-col items-center gap-2 mb-8 relative z-10">
+                    <div className="w-16 h-16 mb-1">
+                        <LottieIcon animationData={mainData} size={64} />
                     </div>
-                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
-                        FinanceAI
-                    </h1>
+                    <div className="text-center">
+                        <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary tracking-tighter">
+                            FinanceAI
+                        </h1>
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold -mt-1 opacity-70">
+                            Smart Wealth
+                        </p>
+                    </div>
                 </div>
 
-                {/* Animated Graphic Removed as requested */}
-
                 {/* User Profile Snippet */}
-                <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800/50 rounded-xl mb-2 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700/50 mt-[-20px]">
-                    <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center overflow-hidden border border-teal-500/20">
+                <div className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800/40 rounded-2xl mb-2 shadow-sm dark:shadow-inner border border-slate-200 dark:border-slate-700/50">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20 p-1">
                         {user?.photoURL ? (
                             <img
                                 src={user.photoURL}
                                 alt="Profile"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover rounded-full"
                             />
                         ) : (
-                            <LottieIcon animationData={profileData} size={40} />
+                            <div className="bg-primary/20 rounded-full w-full h-full flex items-center justify-center">
+                                <LottieIcon animationData={user?.uid ? profileData : expensesData} size={32} />
+                            </div>
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-base font-black text-slate-800 dark:text-white truncate tracking-tight">
-                                {user?.name || user?.fullName || user?.displayName || "Guest"}
+                            <h3 className="text-lg font-black text-slate-800 dark:text-white truncate tracking-tight">
+                                {user?.fullName || user?.name || user?.displayName || "Guest"}
                             </h3>
-                            <div className="w-5 h-5 flex-shrink-0">
-                                <LottieIcon animationData={profileData} size={20} />
-                            </div>
                         </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold truncate opacity-50"></p>
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 px-4 space-y-3">
+            <div className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
                 {links.map((link) => (
                     <NavLink
                         key={link.name}
                         to={link.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-5 px-6 py-4 rounded-2xl font-black transition-all relative group ${isActive
-                                ? "bg-teal-500 text-white shadow-xl shadow-teal-500/25 scale-[1.02]"
+                            `flex items-center gap-5 px-6 py-3 rounded-2xl font-black transition-all relative group ${isActive
+                                ? "bg-primary text-white shadow-xl shadow-primary/25 scale-[1.02]"
                                 : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
                             }`
                         }
                     >
-                        <div className="w-8 h-8 flex items-center justify-center">
+                        <div className="w-7 h-7 flex items-center justify-center">
                             {link.animation ? (
-                                <LottieIcon animationData={link.animation} size={32} />
+                                <LottieIcon animationData={link.animation} size={28} />
                             ) : (
                                 link.icon
                             )}
                         </div>
-                        <span className="tracking-wide text-lg">{link.name}</span>
+                        <span className="tracking-wide text-base">{link.name}</span>
                         {link.path === pathname && (
                             <motion.div
                                 layoutId="sidebar-accent"
-                                className="absolute left-0 w-1.5 h-8 bg-white rounded-r-full"
+                                className="absolute left-0 w-1.5 h-6 bg-white rounded-r-full"
                             />
                         )}
                     </NavLink>

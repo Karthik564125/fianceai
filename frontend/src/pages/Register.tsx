@@ -5,7 +5,10 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Camera, Loader2 } from "lucide-react";
+import { uploadImage } from "../services/cloudinary";
+
+import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -15,11 +18,28 @@ export default function Register() {
     dob: "",
     phone: ""
   });
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
+
   const validatePassword = (pwd: string) => {
     const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/;
     return re.test(pwd);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,18 +49,32 @@ export default function Register() {
       return;
     }
 
+    setLoading(true);
     try {
+      let photoURL = "";
+      if (image) {
+        photoURL = await uploadImage(image);
+      }
+
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
 
-      // 2. Save additional profile data in Firestore
-      await setDoc(doc(db, "users", user.uid), {
+      const userData = {
         fullName: formData.name,
         email: formData.email,
         phone: formData.phone,
         dob: formData.dob,
+        photoURL: photoURL,
         createdAt: new Date().toISOString()
+      };
+
+      // 2. Save additional profile data in Firestore
+      await setDoc(doc(db, "users", user.uid), userData);
+
+      setUser({
+        uid: user.uid,
+        ...userData
       });
 
       toast.success("Registration successful!");
@@ -48,6 +82,8 @@ export default function Register() {
     } catch (err: any) {
       console.error("Registration Error:", err);
       toast.error(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,6 +107,28 @@ export default function Register() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative group cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-700 group-hover:border-teal-500 overflow-hidden flex items-center justify-center bg-slate-900/50 transition-colors">
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera className="text-slate-500 group-hover:text-teal-500 transition-colors" size={32} />
+                )}
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-teal-500 p-2 rounded-full text-white shadow-lg pointer-events-none">
+                <Camera size={14} />
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Profile Picture (Optional)</p>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase tracking-wider">Full Name</label>
             <input
@@ -141,8 +199,11 @@ export default function Register() {
             </div>
           </div>
 
-          <button className="w-full bg-gradient-to-r from-teal-600 to-teal-500 text-white p-4 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all mt-4">
-            Sign Up
+          <button
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-teal-600 to-teal-500 text-white p-4 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all mt-4 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 size={20} className="animate-spin" /> : "Sign Up"}
           </button>
         </form>
 

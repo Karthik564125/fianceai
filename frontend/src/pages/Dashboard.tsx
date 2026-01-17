@@ -14,7 +14,7 @@ const StatCard = ({ icon: Icon, title, value, color, subtext }: any) => (
             <h3 className="text-2xl font-bold mt-1 text-slate-800 dark:text-white">{value}</h3>
             {subtext && <p className={`text-xs mt-1 ${color}`}>{subtext}</p>}
         </div>
-        <div className={`p-3 rounded-xl ${color.replace('text-', 'bg-').replace('600', '500')}/10 ${color} relative z-10`}>
+        <div className={`p-3 rounded-xl ${color.includes('emerald') ? 'bg-emerald-500/10 text-emerald-400' : color.includes('primary') ? 'bg-primary/10 text-primary' : color.includes('accent') ? 'bg-accent/10 text-accent' : 'bg-red-500/10 text-red-400'} relative z-10`}>
             <Icon size={24} />
         </div>
     </div>
@@ -28,21 +28,18 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
         if (!user?.uid) return;
         try {
-            // Fetch All Incomes
             const incomeQuery = query(collection(db, "incomes"), where("userId", "==", user.uid));
             const incomeSnapshot = await getDocs(incomeQuery);
             const totalIncome = incomeSnapshot.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
 
-            // Fetch All Expenses
             const expenseQuery = query(collection(db, "expenses"), where("userId", "==", user.uid));
             const expenseSnapshot = await getDocs(expenseQuery);
             const totalExpense = expenseSnapshot.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
 
-            // Fetch Recent Expenses - Removed orderBy to avoid index requirement
             const recentExpenseQuery = query(
                 collection(db, "expenses"),
                 where("userId", "==", user.uid),
-                limit(20) // Fetch more to allow client-side sorting
+                limit(20)
             );
             const recentSnapshot = await getDocs(recentExpenseQuery);
             const recentExpenses = recentSnapshot.docs
@@ -50,18 +47,18 @@ const Dashboard = () => {
                 .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .slice(0, 5);
 
-            // Fetch User Budget from Profile
             const userDoc = await getDoc(doc(db, "users", user.uid));
             const userDataFromFirestore = userDoc.data();
             const budget = userDataFromFirestore?.budget || 0;
 
             const savings = totalIncome - totalExpense;
-            const budgetUsedPercentage = (totalExpense / budget) * 100;
+            const budgetUsedPercentage = budget > 0 ? (totalExpense / budget) * 100 : 0;
 
-            // Generate Basic Insights
             const insights = [];
-            if (budgetUsedPercentage > 90) {
-                insights.push({ type: 'warning', message: "You've used over 90% of your monthly budget!" });
+            if (budget > 0 && budgetUsedPercentage >= 100) {
+                insights.push({ type: 'error', message: "OVER EXCEEDED: You have surpassed your monthly budget limit!" });
+            } else if (budget > 0 && budgetUsedPercentage > 90) {
+                insights.push({ type: 'warning', message: "CAUTION: You've used over 90% of your monthly budget!" });
             } else if (savings < 0) {
                 insights.push({ type: 'warning', message: "Your expenses exceed your income this month." });
             } else if (totalIncome > 0) {
@@ -69,13 +66,7 @@ const Dashboard = () => {
             }
 
             setData({
-                summary: {
-                    totalIncome,
-                    totalExpense,
-                    savings,
-                    budget,
-                    budgetUsedPercentage
-                },
+                summary: { totalIncome, totalExpense, savings, budget, budgetUsedPercentage },
                 recentExpenses,
                 insights
             });
@@ -90,12 +81,12 @@ const Dashboard = () => {
         fetchDashboardData();
     }, [user?.uid]);
 
-    if (loading) return <div className="text-white">Loading Dashboard...</div>;
+    if (loading) return <div className="text-white p-12">Loading Dashboard...</div>;
 
     return (
-        <div>
+        <div className="pb-10">
             <div className="mb-8 flex items-center gap-4">
-                <div className="bg-teal-500/10 p-3 rounded-2xl">
+                <div className="bg-primary/10 p-3 rounded-2xl">
                     <LottieIcon animationData={homeData} size={48} />
                 </div>
                 <div>
@@ -108,8 +99,8 @@ const Dashboard = () => {
             {data?.insights?.length > 0 && (
                 <div className="mb-8 space-y-2">
                     {data.insights.map((insight: any, i: number) => (
-                        <div key={i} className={`p-4 rounded-xl flex items-center gap-3 border ${insight.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' :
-                            insight.type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-200' :
+                        <div key={i} className={`p-4 rounded-xl flex items-center gap-3 border transition-all ${insight.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500 font-bold' :
+                            insight.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' :
                                 'bg-emerald-500/10 border-emerald-500/20 text-emerald-200'
                             }`}>
                             <AlertTriangle size={20} />
@@ -121,34 +112,16 @@ const Dashboard = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <StatCard
-                    icon={Wallet}
-                    title="Total Income"
-                    value={`₹${(data?.summary?.totalIncome || 0).toLocaleString()}`}
-                    color="text-emerald-400"
-                    subtext="All Time"
-                />
+                <StatCard icon={Wallet} title="Total Income" value={`₹${(data?.summary?.totalIncome || 0).toLocaleString()}`} color="text-emerald-400" subtext="All Time" />
                 <StatCard
                     icon={TrendingDown}
                     title="Total Expense"
                     value={`₹${(data?.summary?.totalExpense || 0).toLocaleString()}`}
-                    color="text-red-400"
+                    color={data?.summary?.budgetUsedPercentage >= 100 ? "text-red-500" : "text-red-400"}
                     subtext={`${(data?.summary?.budgetUsedPercentage || 0).toFixed(0)}% of Budget`}
                 />
-                <StatCard
-                    icon={TrendingUp}
-                    title="Total Savings"
-                    value={`₹${(data?.summary?.savings || 0).toLocaleString()}`}
-                    color="text-blue-400"
-                    subtext="Available Balance"
-                />
-                <StatCard
-                    icon={Wallet}
-                    title="Budget Limit"
-                    value={`₹${(data?.summary?.budget || 0).toLocaleString()}`}
-                    color="text-violet-400"
-                    subtext="Monthly Cap"
-                />
+                <StatCard icon={TrendingUp} title="Total Savings" value={`₹${(data?.summary?.savings || 0).toLocaleString()}`} color="text-primary" subtext="Available Balance" />
+                <StatCard icon={Wallet} title="Budget Limit" value={`₹${(data?.summary?.budget || 0).toLocaleString()}`} color="text-accent" subtext="Monthly Cap" />
             </div>
 
             {/* Recent Activity */}
@@ -159,8 +132,7 @@ const Dashboard = () => {
                         <tr className="text-left text-slate-400 text-sm border-b border-slate-700">
                             <th className="pb-3 pl-2">Category</th>
                             <th className="pb-3">Description</th>
-                            <th className="pb-3">Date</th>
-                            <th className="pb-3 pr-2 text-right">Amount</th>
+                            <th className="pb-3 px-2 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,14 +141,11 @@ const Dashboard = () => {
                                 <tr key={expense.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30">
                                     <td className="py-4 pl-2 font-medium text-slate-200">{expense.category}</td>
                                     <td className="py-4 text-slate-400">{expense.description || "-"}</td>
-                                    <td className="py-4 text-slate-400">{new Date(expense.date).toLocaleDateString()}</td>
-                                    <td className="py-4 pr-2 text-right font-bold text-white">-₹{expense.amount}</td>
+                                    <td className="py-4 px-2 text-right font-bold text-white">-₹{expense.amount}</td>
                                 </tr>
                             ))
                         ) : (
-                            <tr>
-                                <td colSpan={4} className="py-8 text-center text-slate-500">No recent expenses found.</td>
-                            </tr>
+                            <tr><td colSpan={3} className="py-8 text-center text-slate-500">No recent expenses found.</td></tr>
                         )}
                     </tbody>
                 </table>

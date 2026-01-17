@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: ./backend
+    image: ai-finance-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+
+  frontend:
+    build: ./frontend
+    image: ai-finance-frontend
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend
