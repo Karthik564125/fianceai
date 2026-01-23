@@ -73,6 +73,10 @@ const About = () => {
                             <p className="text-accent font-black text-3xl">Gemini</p>
                             <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Core Intelligence</p>
                         </div>
+                        <div>
+                            <p className="text-emerald-400 font-black text-3xl">Firebase</p>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Auth & Data</p>
+                        </div>
 
                     </div>
                 </div>

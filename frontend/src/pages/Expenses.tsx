@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { Plus, Trash2, X, DollarSign, Calendar, Loader, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, X, IndianRupee, Calendar, Loader, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import LottieIcon from "../components/LottieIcon";
 import expensesData from "../assets/animations/expenses.json";
@@ -125,7 +125,7 @@ const Expenses = () => {
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     {budgetStatus !== null && (
                         <div className={`px-4 py-2 rounded-xl border flex items-center gap-2 ${budgetStatus < 0 ? 'bg-red-500/10 border-red-500/20 text-red-500 font-bold animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>
-                            {budgetStatus < 0 ? <AlertTriangle size={18} /> : <DollarSign size={18} />}
+                            {budgetStatus < 0 ? <AlertTriangle size={18} /> : <IndianRupee size={18} />}
                             <span>
                                 {budgetStatus < 0 ? `Exceeded by ₹${Math.abs(budgetStatus).toLocaleString()}` : `Budget Left: ₹${budgetStatus.toLocaleString()}`}
                             </span>
@@ -146,7 +146,7 @@ const Expenses = () => {
                 </div>
             ) : expenses.length === 0 ? (
                 <div className="glass-card p-12 text-center rounded-3xl">
-                    <DollarSign size={64} className="mx-auto text-red-500/50 mb-4" />
+                    <IndianRupee size={64} className="mx-auto text-red-500/50 mb-4" />
                     <h3 className="text-xl font-bold text-white">No Expenses Recorded</h3>
                     <p className="text-slate-400 mt-2">Track where your money goes by adding an expense.</p>
                 </div>

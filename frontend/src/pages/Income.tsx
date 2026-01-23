@@ -64,7 +64,12 @@ const Income = () => {
             fetchIncomes();
             toast.success("Income added successfully!");
         } catch (err) {
-            toast.error("Failed to add income");
+            console.error("Firebase Error when adding income:", err);
+            if (err instanceof Error) {
+                toast.error(`Error: ${err.message}`);
+            } else {
+                toast.error("Failed to add income");
+            }
         }
     };
 

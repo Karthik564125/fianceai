@@ -352,6 +352,7 @@ const Profile = () => {
                             <div className="space-y-4">
                                 <p className="text-sm text-slate-500 font-medium leading-relaxed">
                                     Protect your account by regularly updating your password.
+                                    Check INBOX/SPAM in your mail to reset the password
                                 </p>
                                 <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
                                     <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Status</p>
