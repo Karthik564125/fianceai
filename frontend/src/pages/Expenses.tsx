@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, updateDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { Plus, Trash2, X, IndianRupee, Calendar, Loader, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, X, IndianRupee, Calendar, Loader, AlertTriangle, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import LottieIcon from "../components/LottieIcon";
 import expensesData from "../assets/animations/expenses.json";
@@ -25,10 +25,12 @@ const Expenses = () => {
     const [formData, setFormData] = useState({ amount: "", category: "Food", description: "", date: "" });
     const [loading, setLoading] = useState(true);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [editId, setEditId] = useState<string | null>(null);
 
     const categories = ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Shopping", "Health", "Other"];
 
     const fetchData = async () => {
+        // ... existing
         if (!user?.uid) return;
         try {
             // Fetch Expenses
@@ -67,35 +69,60 @@ const Expenses = () => {
         if (!user?.uid) return;
         try {
             const amount = parseFloat(formData.amount);
-            await addDoc(collection(db, "expenses"), {
-                userId: user.uid,
-                amount: amount,
-                category: formData.category,
-                description: formData.description,
-                date: formData.date,
-                createdAt: new Date().toISOString()
-            });
+
+            if (editId) {
+                await updateDoc(doc(db, "expenses", editId), {
+                    amount: amount,
+                    category: formData.category,
+                    description: formData.description,
+                    date: formData.date
+                });
+                toast.success("Expense updated successfully!");
+                setEditId(null);
+            } else {
+                await addDoc(collection(db, "expenses"), {
+                    userId: user.uid,
+                    amount: amount,
+                    category: formData.category,
+                    description: formData.description,
+                    date: formData.date,
+                    createdAt: new Date().toISOString()
+                });
+
+                const remaining = budget - (totalExpense + amount);
+                if (budget > 0) {
+                    if (remaining < 0) {
+                        toast.error(`Budget Exceeded! You are ₹${Math.abs(remaining).toLocaleString()} over.`);
+                    } else {
+                        toast.success(`Expense added! ₹${remaining.toLocaleString()} budget left.`);
+                    }
+                } else {
+                    toast.success("Expense added successfully!");
+                }
+            }
 
             setShowModal(false);
             setFormData({ amount: "", category: "Food", description: "", date: "" });
             await fetchData();
 
-            const remaining = budget - (totalExpense + amount);
-            if (budget > 0) {
-                if (remaining < 0) {
-                    toast.error(`Budget Exceeded! You are ₹${Math.abs(remaining).toLocaleString()} over.`);
-                } else {
-                    toast.success(`Expense added! ₹${remaining.toLocaleString()} budget left.`);
-                }
-            } else {
-                toast.success("Expense added successfully!");
-            }
         } catch (err) {
-            toast.error("Failed to add expense");
+            toast.error(editId ? "Failed to update expense" : "Failed to add expense");
         }
     };
 
+    const handleEdit = (expense: Expense) => {
+        setFormData({
+            amount: expense.amount.toString(),
+            category: expense.category,
+            description: expense.description || "",
+            date: expense.date
+        });
+        setEditId(expense.id);
+        setShowModal(true);
+    };
+
     const confirmDelete = async () => {
+        // ... existing
         if (!deleteId) return;
         try {
             await deleteDoc(doc(db, "expenses", deleteId));
@@ -112,6 +139,7 @@ const Expenses = () => {
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                {/* ... existing header */}
                 <div className="flex items-center gap-4">
                     <div className="bg-red-500/10 p-3 rounded-2xl">
                         <LottieIcon animationData={expensesData} size={40} />
@@ -132,7 +160,11 @@ const Expenses = () => {
                         </div>
                     )}
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            setEditId(null);
+                            setFormData({ amount: "", category: "Food", description: "", date: "" });
+                            setShowModal(true);
+                        }}
                         className="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold shadow-lg shadow-red-600/20"
                     >
                         <Plus size={20} /> Add Expense
@@ -180,9 +212,14 @@ const Expenses = () => {
                                     </td>
                                     <td className="py-4 pr-6 text-right font-bold text-red-400 text-lg">-₹{expense.amount.toLocaleString()}</td>
                                     <td className="py-4 pr-6 text-right">
-                                        <button onClick={() => setDeleteId(expense.id)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => handleEdit(expense)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all">
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button onClick={() => setDeleteId(expense.id)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -201,7 +238,7 @@ const Expenses = () => {
                             </button>
 
                             <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-white">Add New Expense</h2>
+                                <h2 className="text-2xl font-bold text-white">{editId ? "Edit Expense" : "Add New Expense"}</h2>
                                 <p className="text-slate-400 text-sm">Where did the money go?</p>
                             </div>
 
@@ -266,7 +303,7 @@ const Expenses = () => {
                                     type="submit"
                                     className="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-2xl font-black transition-all shadow-xl shadow-red-600/30 text-lg mt-2"
                                 >
-                                    Save Expense
+                                    {editId ? "Update Expense" : "Save Expense"}
                                 </button>
                             </form>
                         </div>

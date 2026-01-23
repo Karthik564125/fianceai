@@ -2,29 +2,26 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 
-// Node 18+ / Node 20 has fetch built-in
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-/**
- * Health check
- */
 app.get("/health", (req, res) => {
     res.json({ status: "Backend is running" });
 });
 
-/**
- * AI Chat endpoint (Gemini)
- * POST /chat
- */
 app.post("/chat", async (req, res) => {
     try {
         const { question, summary } = req.body;
 
         if (!question) {
             return res.status(400).json({ reply: "Question is required" });
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ reply: "Gemini API key missing" });
         }
 
         const prompt = `
@@ -34,19 +31,17 @@ Income: ₹${summary?.totalIncome || 0}, Expense: ₹${summary?.totalExpense || 
 User Question: "${question}"
 
 Rule: 
-1. Keep response extremely brief (max 3 sentences).
+1. Keep response extremely brief (max 10 sentences).
 2. Use a structured format: direct answer first, then 1-2 small bullet points if needed.
 3. Use Markdown (bold, lists).
-4. End with: "Not financial advice."
+4. Give clear, practical advice with moderate detail (5–8 sentences).
+5. Use structured format: short heading, then bullet points.
+6. Be specific (mention examples like mutual funds, ETFs, gold, RD, FD, etc when relevant).
+7. Avoid generic fluff.
 `;
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ reply: "Gemini API key missing" });
-        }
-
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
             {
                 method: "POST",
                 headers: {
@@ -65,29 +60,24 @@ Rule:
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("GEMINI API ERROR:", JSON.stringify(data, null, 2));
-            return res.status(response.status).json({
-                reply: `AI error: ${data?.error?.message || "Unknown error"}`
+            console.error("GEMINI API ERROR:", data);
+            return res.status(500).json({
+                reply: data?.error?.message || "Gemini API error",
             });
         }
 
         const reply =
-            data?.candidates?.[0]?.content?.parts?.[0]?.text ??
-            "AI could not generate a response. Please try again.";
+            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+            "No response generated.";
 
-        return res.json({ reply });
+        res.json({ reply });
 
     } catch (err) {
-        console.error("AI SERVER ERROR:", err);
-        return res.status(500).json({
-            reply: "AI server error. Please try again later.",
-        });
+        console.error("SERVER ERROR:", err);
+        res.status(500).json({ reply: "Server error" });
     }
 });
 
-/**
- * Server start
- */
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Backend running on port ${PORT}`);

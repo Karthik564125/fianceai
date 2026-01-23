@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { Plus, Trash2, X, Wallet, Calendar, Loader } from "lucide-react";
+import { Plus, Trash2, X, Wallet, Calendar, Loader, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import LottieIcon from "../components/LottieIcon";
 import incomeData from "../assets/animations/income.json";
@@ -23,6 +23,7 @@ const Income = () => {
     const [formData, setFormData] = useState({ amount: "", source: "Salary", date: "", note: "" });
     const [loading, setLoading] = useState(true);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [editId, setEditId] = useState<string | null>(null);
 
     const sources = ["Salary", "Freelance", "Investment", "Gift", "Bonus", "Other"];
 
@@ -51,29 +52,48 @@ const Income = () => {
         e.preventDefault();
         if (!user?.uid) return;
         try {
-            await addDoc(collection(db, "incomes"), {
-                userId: user.uid,
-                amount: parseFloat(formData.amount),
-                source: formData.source,
-                date: formData.date,
-                note: formData.note,
-                createdAt: new Date().toISOString()
-            });
+            if (editId) {
+                await updateDoc(doc(db, "incomes", editId), {
+                    amount: parseFloat(formData.amount),
+                    source: formData.source,
+                    date: formData.date,
+                    note: formData.note,
+                });
+                toast.success("Income updated successfully!");
+            } else {
+                await addDoc(collection(db, "incomes"), {
+                    userId: user.uid,
+                    amount: parseFloat(formData.amount),
+                    source: formData.source,
+                    date: formData.date,
+                    note: formData.note,
+                    createdAt: new Date().toISOString()
+                });
+                toast.success("Income added successfully!");
+            }
             setShowModal(false);
             setFormData({ amount: "", source: "Salary", date: "", note: "" });
+            setEditId(null);
             fetchIncomes();
-            toast.success("Income added successfully!");
         } catch (err) {
-            console.error("Firebase Error when adding income:", err);
-            if (err instanceof Error) {
-                toast.error(`Error: ${err.message}`);
-            } else {
-                toast.error("Failed to add income");
-            }
+            console.error("Firebase Error:", err);
+            toast.error(editId ? "Failed to update income" : "Failed to add income");
         }
     };
 
+    const handleEdit = (income: Income) => {
+        setFormData({
+            amount: income.amount.toString(),
+            source: income.source,
+            date: income.date,
+            note: income.note || ""
+        });
+        setEditId(income.id);
+        setShowModal(true);
+    };
+
     const confirmDelete = async () => {
+        // ... existing
         if (!deleteId) return;
         try {
             await deleteDoc(doc(db, "incomes", deleteId));
@@ -88,6 +108,7 @@ const Income = () => {
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
+                {/* ... existing header */}
                 <div className="flex items-center gap-4">
                     <div className="bg-teal-500/10 p-3 rounded-2xl">
                         <LottieIcon animationData={incomeData} size={40} />
@@ -98,7 +119,11 @@ const Income = () => {
                     </div>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => {
+                        setEditId(null);
+                        setFormData({ amount: "", source: "Salary", date: "", note: "" });
+                        setShowModal(true);
+                    }}
                     className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                     <Plus size={20} /> Add Income
@@ -147,13 +172,22 @@ const Income = () => {
                                         +₹{income.amount}
                                     </td>
                                     <td className="py-4 pr-6 text-right">
-                                        <button
-                                            onClick={() => setDeleteId(income.id)}
-                                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                                            title="Delete Income"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEdit(income)}
+                                                className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                                                title="Edit Income"
+                                            >
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleteId(income.id)}
+                                                className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                title="Delete Income"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -172,7 +206,7 @@ const Income = () => {
                             </button>
 
                             <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-white">Add New Income</h2>
+                                <h2 className="text-2xl font-bold text-white">{editId ? "Edit Income" : "Add New Income"}</h2>
                                 <p className="text-slate-400 text-sm">Record a new payment received.</p>
                             </div>
 

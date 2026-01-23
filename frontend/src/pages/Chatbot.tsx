@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, Trash2, AlertTriangle } from "lucide-react";
 import LottieIcon from "../components/LottieIcon";
 import aiData from "../assets/animations/ai.json";
 import ReactMarkdown from "react-markdown";
+import toast from "react-hot-toast";
+import ConfirmModal from "../components/ConfirmModal";
 
 const Chatbot = () => {
     const { user } = useAuth();
@@ -13,7 +15,24 @@ const Chatbot = () => {
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [chatLoading, setChatLoading] = useState(false);
     const [financialData, setFinancialData] = useState<any>(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // Sync chat history from Firebase
+    useEffect(() => {
+        if (!user?.uid) return;
+        const unsubscribe = onSnapshot(doc(db, "ai_chats", user.uid), (docVal) => {
+            if (docVal.exists()) {
+                const data = docVal.data();
+                if (data.messages) {
+                    setChatMessages(data.messages);
+                }
+            } else {
+                setChatMessages([]);
+            }
+        });
+        return () => unsubscribe();
+    }, [user?.uid]);
 
     useEffect(() => {
         const fetchContext = async () => {
@@ -34,34 +53,92 @@ const Chatbot = () => {
     }, [chatMessages]);
 
     const handleSendChat = async () => {
-        if (!chatInput.trim() || chatLoading) return;
-        const userMsg = chatInput;
+        if (!chatInput.trim() || chatLoading || !user?.uid) return;
+
+        const text = chatInput;
+        const userMsg = { role: "user", text, createdAt: new Date().toISOString() };
+
+        // Optimistic UI update
         setChatInput("");
-        setChatMessages(prev => [...prev, { role: "user", text: userMsg }]);
+        setChatMessages(prev => [...prev, userMsg]);
         setChatLoading(true);
+
+        const chatRef = doc(db, "ai_chats", user.uid);
+
         try {
+            // Save user message
+            await setDoc(chatRef, {
+                messages: arrayUnion(userMsg),
+                userId: user.uid,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+
             const { sendChatMessage } = await import("../services/chatService");
-            const reply = await sendChatMessage(userMsg, financialData);
-            setChatMessages(prev => [...prev, { role: "ai", text: reply }]);
+            const reply = await sendChatMessage(text, financialData);
+
+            const aiMsg = { role: "ai", text: reply, createdAt: new Date().toISOString() };
+
+            // Save AI message
+            await updateDoc(chatRef, {
+                messages: arrayUnion(aiMsg),
+                updatedAt: new Date().toISOString()
+            });
+
         } catch (err: any) {
-            setChatMessages(prev => [...prev, { role: "ai", text: "Failed to reach AI. Please try again." }]);
+            console.error("Chat error:", err);
+            setChatMessages(prev => [...prev, { role: "ai", text: `Error: ${err.message || "Failed to communicate with AI."}` }]);
         } finally {
             setChatLoading(false);
         }
     };
 
+    const handleDeleteChat = () => {
+        if (!user?.uid || chatMessages.length === 0) return;
+        setShowConfirmModal(true);
+    };
+
+    const confirmClearChat = async () => {
+        if (!user?.uid) return;
+        try {
+            await setDoc(doc(db, "ai_chats", user.uid), {
+                messages: [],
+                userId: user.uid,
+                updatedAt: new Date().toISOString()
+            });
+            toast.success("Chat history cleared");
+        } catch (err) {
+            console.error("Error clearing chat:", err);
+            toast.error("Failed to clear chat");
+        }
+    };
+
     return (
         <div className="h-[calc(100vh-100px)] flex flex-col">
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                     <div className="bg-teal-500/10 p-3 rounded-2xl border border-teal-500/20">
                         <LottieIcon animationData={aiData} size={48} />
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-slate-800 dark:text-white">AI Financial Assistant</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Ask anything about your budget, savings, or investments.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Ask anything about your budget, savings, or investments.</p>
                     </div>
                 </div>
+
+                <div className="flex items-center gap-2 text-xs text-amber-500/80 bg-amber-500/5 px-3 py-2 rounded-lg border border-amber-500/10">
+                    <AlertTriangle size={14} />
+                    <span className="font-medium">This AI provides general suggestions, not professional advice. Responses may be incorrect. Always verify important information independently. Use responsibly.</span>
+                </div>
+
+                {chatMessages.length > 0 && (
+                    <button
+                        onClick={handleDeleteChat}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all font-medium border border-red-500/20"
+                    >
+                        <Trash2 size={18} />
+                        Clear Chat
+                    </button>
+                )}
             </div>
 
             <div className="flex-1 glass-card rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-2xl relative">
@@ -120,6 +197,14 @@ const Chatbot = () => {
                     </div>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={confirmClearChat}
+                title="Clear Chat History"
+                message="Are you sure you want to delete all messages? This cannot be undone."
+            />
         </div>
     );
 };

@@ -3,7 +3,7 @@ import { db } from "../firebase";
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
-import { Calendar, Plus, Trash2, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, Plus, Trash2, CheckCircle, Clock, AlertCircle, Loader2, Pencil } from "lucide-react";
 import LottieIcon from "../components/LottieIcon";
 import upcomingData from "../assets/animations/upcoming.json";
 
@@ -13,6 +13,7 @@ const UpcomingPayments = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ title: "", amount: "", date: "", category: "Food" });
+    const [editId, setEditId] = useState<string | null>(null);
 
     const categories = ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Shopping", "Health", "Other"];
 
@@ -33,22 +34,42 @@ const UpcomingPayments = () => {
         fetchPayments();
     }, [user?.uid]);
 
-    const handleAdd = async (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await addDoc(collection(db, "upcomingPayments"), {
-                ...formData,
-                amount: parseFloat(formData.amount),
-                userId: user.uid,
-                status: "pending"
-            });
-            toast.success("Payment added!");
+            if (editId) {
+                await updateDoc(doc(db, "upcomingPayments", editId), {
+                    ...formData,
+                    amount: parseFloat(formData.amount)
+                });
+                toast.success("Payment updated!");
+            } else {
+                await addDoc(collection(db, "upcomingPayments"), {
+                    ...formData,
+                    amount: parseFloat(formData.amount),
+                    userId: user.uid,
+                    status: "pending"
+                });
+                toast.success("Payment added!");
+            }
             setShowModal(false);
             setFormData({ title: "", amount: "", date: "", category: "Food" });
+            setEditId(null);
             fetchPayments();
         } catch (err) {
-            toast.error("Failed to add payment");
+            toast.error(editId ? "Failed to update payment" : "Failed to add payment");
         }
+    };
+
+    const handleEdit = (payment: any) => {
+        setFormData({
+            title: payment.title,
+            amount: payment.amount.toString(),
+            date: payment.date,
+            category: payment.category
+        });
+        setEditId(payment.id);
+        setShowModal(true);
     };
 
     const handleDelete = async (id: string, expenseId?: string) => {
@@ -112,7 +133,11 @@ const UpcomingPayments = () => {
                     </div>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => {
+                        setEditId(null);
+                        setFormData({ title: "", amount: "", date: "", category: "Food" });
+                        setShowModal(true);
+                    }}
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
                 >
                     <Plus size={20} /> Add Payment
@@ -123,18 +148,29 @@ const UpcomingPayments = () => {
                 {payments.length > 0 ? (
                     payments.map((p) => (
                         <div key={p.id} className="glass-card p-6 rounded-3xl border border-slate-700/50 hover-scale relative group transition-all duration-300">
-                            <div className="absolute top-4 right-4">
-                                <button onClick={() => handleDelete(p.id, p.expenseId)} className="text-slate-500 hover:text-red-400 p-2 transition-colors">
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
+                            {p.status !== 'paid' && (
+                                <div className="absolute top-4 right-4 flex gap-2">
+                                    <button
+                                        onClick={() => handleEdit(p)}
+                                        className="text-slate-500 hover:text-blue-400 p-2 transition-colors"
+                                    >
+                                        <Pencil size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(p.id, p.expenseId)}
+                                        className="text-slate-500 hover:text-red-400 p-2 transition-colors"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            )}
                             <div className={`p-3 rounded-2xl w-fit mb-4 ${p.status === 'paid' ? 'bg-red-500/10 text-red-400' : 'bg-primary/10 text-primary'}`}>
                                 <Calendar size={24} />
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-1">{p.title}</h3>
+                            <h3 className={`text-xl font-bold text-white mb-1 ${p.status === 'paid' ? 'line-through opacity-50' : ''}`}>{p.title}</h3>
                             <p className="text-slate-400 text-sm mb-4">{p.category} • {p.date}</p>
                             <div className="flex items-center justify-between mt-6">
-                                <span className={`text-2xl font-black ${p.status === 'paid' ? 'text-red-400' : 'text-white'}`}>₹{p.amount}</span>
+                                <span className={`text-2xl font-black ${p.status === 'paid' ? 'text-red-400 line-through opacity-50' : 'text-white'}`}>₹{p.amount}</span>
                                 <button
                                     onClick={() => markAsPaid(p)}
                                     disabled={p.status === 'paid'}
@@ -164,8 +200,8 @@ const UpcomingPayments = () => {
             {showModal && (
                 <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
                     <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl">
-                        <h2 className="text-2xl font-bold text-white mb-6">Add New Payment</h2>
-                        <form onSubmit={handleAdd} className="space-y-4">
+                        <h2 className="text-2xl font-bold text-white mb-6">{editId ? "Edit Payment" : "Add New Payment"}</h2>
+                        <form onSubmit={handleSave} className="space-y-4">
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase ml-1">Title</label>
                                 <input
@@ -214,7 +250,7 @@ const UpcomingPayments = () => {
                             </div>
                             <div className="flex gap-4 mt-8">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-slate-400 font-bold hover:text-white transition-colors">Cancel</button>
-                                <button className="flex-1 bg-primary py-3 rounded-xl font-bold text-white shadow-lg shadow-primary/20">Add Payment</button>
+                                <button className="flex-1 bg-primary py-3 rounded-xl font-bold text-white shadow-lg shadow-primary/20">{editId ? "Update Payment" : "Add Payment"}</button>
                             </div>
                         </form>
                     </div>
