@@ -1,0 +1,14 @@
+name: First CI Check
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Say hello
+        run: echo "CI is working v2!"
