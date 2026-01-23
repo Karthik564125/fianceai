@@ -21,3 +21,5 @@ jobs:
 
       - name: Build frontend image
         run: docker build -t frontend ./frontend
+      - name: Run backend security audit
+        run: cd backend && npm install && npm audit --audit-level=high
