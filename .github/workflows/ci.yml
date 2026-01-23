@@ -1,4 +1,4 @@
-name: First CI Check
+name: CI - Build Docker Images
 
 on:
   push:
@@ -6,9 +6,18 @@ on:
       - main
 
 jobs:
-  test-ci:
+  docker-build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Say hello
-        run: echo "CI is working v2!"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        run: docker build -t backend ./backend
+
+      - name: Build frontend image
+        run: docker build -t frontend ./frontend
