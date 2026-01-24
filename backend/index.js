@@ -30,7 +30,6 @@ Income: ₹${summary?.totalIncome || 0}, Expense: ₹${summary?.totalExpense || 
 
 User Question: "${question}"
 
-Rule: 
 1. Keep response extremely brief (max 10 sentences).
 2. Use a structured format: direct answer first, then 1-2 small bullet points if needed.
 3. Use Markdown (bold, lists).
@@ -44,9 +43,7 @@ Rule:
             `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [
                         {
@@ -78,7 +75,7 @@ Rule:
     }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Backend running on port ${PORT}`);
 });
