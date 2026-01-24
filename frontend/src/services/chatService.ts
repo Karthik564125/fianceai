@@ -8,7 +8,7 @@ export async function sendChatMessage(
     }
 ) {
     // Using absolute path to the live backend
-    const response = await fetch("https://financeai-backend-exni.onrender.com/chat", {
+    const response = await fetch("https://financeai-backend-docker.onrender.com/chat", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

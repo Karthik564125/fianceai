@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://financeai-backend-exni.onrender.com',
+        target: 'https://financeai-backend-docker.onrender.com/chat',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
