@@ -121,15 +121,15 @@ const UpcomingPayments = () => {
     );
 
     return (
-        <div className="space-y-8 pb-10">
+        <div className="space-y-8 pb-24 md:pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="flex items-center gap-4">
                     <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                         <LottieIcon animationData={upcomingData} size={40} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-white">Upcoming</h1>
-                        <p className="text-slate-400">Never miss a payment again.</p>
+                        <h1 className="text-3xl font-black text-white leading-tight">Upcoming</h1>
+                        <p className="text-slate-400 text-sm font-medium tracking-tight">Never miss a payment again.</p>
                     </div>
                 </div>
                 <button
@@ -138,11 +138,23 @@ const UpcomingPayments = () => {
                         setFormData({ title: "", amount: "", date: "", category: "Food" });
                         setShowModal(true);
                     }}
-                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
+                    className="hidden md:flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-primary/30 transition-all uppercase text-xs tracking-widest"
                 >
-                    <Plus size={20} /> Add Payment
+                    <Plus size={18} /> Add Payment
                 </button>
             </div>
+
+            {/* Mobile FAB */}
+            <button
+                onClick={() => {
+                    setEditId(null);
+                    setFormData({ title: "", amount: "", date: "", category: "Food" });
+                    setShowModal(true);
+                }}
+                className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl shadow-primary/40 z-[50] active:scale-90 transition-transform border-4 border-slate-900"
+            >
+                <Plus size={28} />
+            </button>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {payments.length > 0 ? (

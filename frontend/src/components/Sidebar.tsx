@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Info, LogOut } from "lucide-react";
+import { LogOut, Info } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LottieIcon from "./LottieIcon";
+import ConfirmModal from "./ConfirmModal";
 
 import mainData from "../assets/animations/main.json";
 import homeData from "../assets/animations/home.json";
@@ -21,6 +23,7 @@ interface SidebarProps {
 const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
     const { pathname } = useLocation();
     const { user, logout } = useAuth();
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const links = [
         { name: "Dashboard", path: "/", animation: homeData },
@@ -100,10 +103,10 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                             }
                         >
                             <div className="w-7 h-7 flex items-center justify-center">
-                                {link.animation ? (
-                                    <LottieIcon animationData={link.animation} size={28} />
+                                {(link as any).animation ? (
+                                    <LottieIcon animationData={(link as any).animation} size={28} />
                                 ) : (
-                                    link.icon
+                                    (link as any).icon
                                 )}
                             </div>
                             <span className="tracking-wide text-base">{link.name}</span>
@@ -119,7 +122,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
 
                 <div className="p-6 mt-auto border-t border-slate-200 dark:border-slate-800">
                     <button
-                        onClick={logout}
+                        onClick={() => setShowLogoutModal(true)}
                         className="flex items-center gap-5 px-6 py-4 w-full rounded-2xl font-black transition-all text-red-500 hover:bg-red-500/10 text-lg"
                     >
                         <div className="w-8 h-8 flex items-center justify-center">
@@ -129,6 +132,15 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={logout}
+                confirmText="Logout"
+                title="Logout Confirmation"
+                message="Are you sure you want to log out of your account? You will need to sign in again to access your panel."
+            />
         </>
     );
 };

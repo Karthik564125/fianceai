@@ -6,12 +6,11 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
     Save,
-    Shield, Loader2, Key, MailCheck, Wallet
+    Shield, Loader2, Key, MailCheck, Wallet, Trash2, Camera
 } from "lucide-react";
 import LottieIcon from "../components/LottieIcon";
 import profileData from "../assets/animations/profile.json";
 import ConfirmModal from "../components/ConfirmModal";
-import { Trash2, Camera } from "lucide-react";
 import { uploadImage } from "../services/cloudinary";
 
 const Profile = () => {
@@ -154,18 +153,18 @@ const Profile = () => {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-10">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
+            <div className="flex items-center gap-5 mb-8">
                 <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
-                    <LottieIcon animationData={profileData} size={40} />
+                    <LottieIcon animationData={profileData} size={48} />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white">Profile</h1>
-                    <p className="text-slate-500 dark:text-slate-400">Manage your personal information</p>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white leading-tight">Profile</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your personal information</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left Column: Avatar & Quick Actions */}
+                {/* Left Column: Avatar & Summary */}
                 <div className="lg:col-span-4 space-y-8">
                     <div className="glass-card p-10 rounded-3xl text-center relative overflow-hidden group shadow-xl">
                         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-accent" />
@@ -196,46 +195,35 @@ const Profile = () => {
                         <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-tight mb-1">
                             {profile.name || "User"}
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{profile.email}</p>
-                    </div>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8">{profile.email}</p>
 
-                    {/* Box 6: Danger Zone / Delete Account */}
-                    <div className="glass-card p-8 rounded-3xl border border-rose-500/10 shadow-xl relative overflow-hidden group">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-rose-500/50" />
-                        <div className="flex flex-col gap-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400">
-                                    <Trash2 size={20} />
-                                </div>
-                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Danger Zone</h3>
+                        {/* Budget Input Integrated here */}
+                        <div className="bg-slate-900/50 p-6 rounded-[2rem] border border-emerald-500/20 shadow-inner text-left">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Wallet size={16} className="text-emerald-500" />
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Monthly Budget</p>
                             </div>
-
-                            <div className="space-y-4">
-                                <p className="text-sm text-slate-500 font-bold italic leading-relaxed">
-                                    <h1>Deleting the account is permanent and cannot be undone.</h1>
-                                    <h1>You can always create a new account if you change your mind.</h1>
-                                    <h1>The data associated with the account will be permanently deleted.</h1>
-                                    <h1>Thanks for using our service.</h1>
-                                </p>
-                                <button
-                                    onClick={() => setShowDeleteModal(true)}
-                                    disabled={deleting}
-                                    className="w-full py-4 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl text-sm font-black transition-all border border-rose-500/20 flex items-center justify-center gap-2 group/del"
-                                >
-                                    {deleting ? (
-                                        <Loader2 className="animate-spin" size={18} />
-                                    ) : (
-                                        <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
-                                    )}
-                                    DELETE ACCOUNT
-                                </button>
+                            <div className="text-3xl font-black text-white flex items-baseline gap-2 group">
+                                <span className="text-xl text-emerald-500 font-black">₹</span>
+                                <input
+                                    type="number"
+                                    className="bg-transparent border-none p-0 text-white focus:outline-none focus:ring-0 w-full font-black appearance-none"
+                                    value={profile.budget}
+                                    onChange={(e) => setProfile({ ...profile, budget: parseInt(e.target.value) || 0 })}
+                                />
                             </div>
+                            <button
+                                onClick={handleUpdateProfile}
+                                disabled={updating}
+                                className="mt-4 w-full bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-white py-3 rounded-2xl font-black transition-all uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 border border-emerald-500/20"
+                            >
+                                {updating ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />} Update Budget
+                            </button>
                         </div>
                     </div>
-
-
                 </div>
 
+                {/* Right Column: Settings */}
                 <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Box 1: Account Settings */}
                     <div className="glass-card p-8 rounded-3xl border border-primary/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
@@ -261,7 +249,7 @@ const Profile = () => {
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Date of Birth</label>
                                     <input
                                         type="date"
-                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary transition-all font-bold"
+                                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary transition-all font-bold text-sm"
                                         value={profile.dob}
                                         onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
                                     />
@@ -309,61 +297,71 @@ const Profile = () => {
                         </button>
                     </div>
 
-                    {/* Box 3: Budget Settings */}
-                    <div className="glass-card p-8 rounded-3xl border border-emerald-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/50" />
-                        <div>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
-                                    <Wallet size={20} />
-                                </div>
-                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Budget</h3>
-                            </div>
-                            <div className="space-y-6">
-                                <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/50 shadow-inner">
-                                    <p className="text-slate-500 text-[10px] font-black uppercase mb-3 tracking-[0.2em]">Monthly Limit</p>
-                                    <div className="text-3xl font-black text-white flex items-baseline gap-2">
-                                        <span className="text-xl text-emerald-500 font-bold">₹</span>
-                                        <input
-                                            type="number"
-                                            className="bg-transparent border-none p-0 text-white focus:outline-none focus:ring-0 w-full"
-                                            value={profile.budget}
-                                            onChange={(e) => setProfile({ ...profile, budget: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button onClick={handleUpdateProfile} disabled={updating} className="mt-8 w-full bg-emerald-600 text-white py-4 rounded-2xl font-black hover:bg-emerald-500 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
-                            {updating ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save Budget
-                        </button>
-                    </div>
-
                     {/* Box 4: Security */}
-                    <div className="glass-card p-8 rounded-3xl border border-primary/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                    <div className="glass-card p-8 rounded-3xl border border-primary/10 shadow-xl relative overflow-hidden flex flex-col justify-between md:col-span-2">
                         <div className="absolute top-0 left-0 w-1 h-full bg-primary/50" />
-                        <div>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                                    <Key size={20} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                                        <Key size={20} />
+                                    </div>
+                                    <h3 className="text-xl font-black text-white uppercase tracking-wider">Security</h3>
                                 </div>
-                                <h3 className="text-xl font-black text-white uppercase tracking-wider">Security</h3>
-                            </div>
-                            <div className="space-y-4">
-                                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-4">
                                     Protect your account by regularly updating your password.
-                                    Check INBOX/SPAM in your mail to reset the password
+                                    Check INBOX/SPAM in your mail to reset the password.
                                 </p>
                                 <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
                                     <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Status</p>
                                     <p className="text-xs font-bold text-slate-300">Secure & Verified</p>
                                 </div>
                             </div>
+                            <div className="flex items-end">
+                                <button onClick={handleResetPasswordEmail} className="w-full bg-primary text-white py-4 rounded-2xl font-black hover:bg-primary/90 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                                    <MailCheck size={16} /> Send Reset Link
+                                </button>
+                            </div>
                         </div>
-                        <button onClick={handleResetPasswordEmail} className="mt-8 w-full bg-primary text-white py-4 rounded-2xl font-black hover:bg-primary/90 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2">
-                            <MailCheck size={16} /> Send Reset Link
-                        </button>
                     </div>
+                </div>
+            </div>
+
+            {/* Box 5: Danger Zone / Delete Account */}
+            <div className="glass-card p-8 rounded-3xl border border-rose-500/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 left-0 w-1 h-full bg-rose-500/50" />
+                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-3 shrink-0">
+                        <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400">
+                            <Trash2 size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-wider">Danger Zone</h3>
+                            <p className="text-xs text-slate-500 font-bold italic mt-1 uppercase tracking-widest opacity-60">Permanent actions</p>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 space-y-1">
+                        <p className="text-[11px] text-slate-500 font-bold italic leading-relaxed uppercase tracking-tight">
+                            • Deleting the account is permanent and cannot be undone.<br />
+                            • You can always create a new account if you change your mind.<br />
+                            • The data associated with the account will be permanently deleted.<br />
+                            • Thanks for using our service.
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() => setShowDeleteModal(true)}
+                        disabled={deleting}
+                        className="w-full md:w-auto px-10 py-4 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl text-xs font-black transition-all border border-rose-500/20 flex items-center justify-center gap-2 group/del uppercase tracking-widest shadow-lg shadow-rose-600/5 shrink-0"
+                    >
+                        {deleting ? (
+                            <Loader2 className="animate-spin" size={18} />
+                        ) : (
+                            <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
+                        )}
+                        Delete Permanently
+                    </button>
                 </div>
             </div>
 
@@ -374,7 +372,7 @@ const Profile = () => {
                 title="Delete Account"
                 message="Are you sure you want to delete your account? This action is permanent and will delete all your data including expenses and incomes. You may need to login again before deleting for security reasons."
             />
-        </div >
+        </div>
     );
 };
 

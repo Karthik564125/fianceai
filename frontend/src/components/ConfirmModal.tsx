@@ -6,9 +6,10 @@ interface ConfirmModalProps {
     onConfirm: () => void;
     title: string;
     message: string;
+    confirmText?: string;
 }
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: ConfirmModalProps) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Delete" }: ConfirmModalProps) => {
     if (!isOpen) return null;
 
     return (
@@ -43,7 +44,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: ConfirmMod
                                 }}
                                 className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all font-medium"
                             >
-                                Delete
+                                {confirmText}
                             </button>
                         </div>
                     </div>

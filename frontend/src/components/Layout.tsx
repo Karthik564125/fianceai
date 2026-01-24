@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
+import TopBar from "./TopBar";
 
 const Layout = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -15,16 +16,18 @@ const Layout = () => {
 
             <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
-            <div className="flex-1 transition-all duration-300 ml-0 md:ml-72 p-4 md:p-8 md:pr-12 overflow-y-auto h-screen relative z-0 w-full md:max-w-[calc(100vw-18rem)]">
-                {/* Mobile Menu Button */}
-                <button
-                    onClick={() => setMobileOpen(true)}
-                    className="md:hidden mb-4 p-2 bg-slate-800/50 rounded-xl text-white border border-slate-700/50 backdrop-blur-md"
-                >
-                    <Menu size={24} />
-                </button>
-                <Outlet />
+            <div className="flex-1 flex flex-col transition-all duration-300 ml-0 md:ml-72 overflow-hidden h-screen relative z-0 w-full">
+                {/* Mobile TopBar */}
+                <TopBar />
+
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 md:pr-12 pb-24 md:pb-8">
+                    <Outlet />
+                </div>
             </div>
+
+            {/* Mobile BottomNav */}
+            <BottomNav />
         </div>
     );
 };
