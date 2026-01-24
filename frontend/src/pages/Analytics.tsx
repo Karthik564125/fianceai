@@ -118,7 +118,7 @@ const Analytics = () => {
             const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
             XLSX.utils.book_append_sheet(wb, categorySheet, "Categories");
         }
-        XLSX.writeFile(wb, `FinanceAI_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(wb, `SpendWise_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     if (loading || !data) return (

@@ -43,7 +43,7 @@ const About = () => {
                         <span className="bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-gradient text-transparent bg-clip-text">Financial Freedom</span>
                     </h1>
                     <p className="text-slate-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-medium">
-                        FinanceAI isn't just a tracker—it's your private financial headquarters.
+                        SpendWise isn't just a tracker—it's your private financial headquarters.
                         We combine cutting-edge technology with intuitive design to give you
                         total clarity over your money.
                     </p>

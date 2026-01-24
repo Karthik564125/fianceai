@@ -20,7 +20,7 @@ const TopBar = () => {
                         <LottieIcon animationData={mainData} size={32} />
                     </div>
                     <h1 className="text-xl font-black bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent tracking-tighter">
-                        FinanceAI
+                        SpendWise
                     </h1>
                 </div>
 

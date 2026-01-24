@@ -116,7 +116,7 @@ export default function Login() {
                             <div className="flex items-center gap-4 mb-6">
                                 <LottieIcon animationData={mainData} size={64} />
                                 <h1 className="text-4xl font-black bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-none">
-                                    FinanceAI
+                                    SpendWise
                                 </h1>
                             </div>
 
@@ -141,7 +141,7 @@ export default function Login() {
                             </div>
 
                             <p className="mt-8 text-[10px] text-slate-600 uppercase font-black tracking-widest">
-                                Orgainze your finance, plan your future, and live your best life.
+                                Organize your finance, plan your future, and live your best life.
                             </p>
                         </motion.div>
                     )}
@@ -166,7 +166,7 @@ export default function Login() {
                                     <LogIn className="text-primary" size={24} />
                                 </div>
                                 <h2 className="text-xl font-black uppercase tracking-tighter">Welcome Back</h2>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">FinanceAI Portal Access</p>
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">SpendWise Portal Access</p>
                             </div>
 
                             <form onSubmit={handleLogin} className="space-y-4">
@@ -227,7 +227,7 @@ export default function Login() {
                                     <UserPlus className="text-accent" size={24} />
                                 </div>
                                 <h2 className="text-xl font-black uppercase tracking-tighter">Create Identity</h2>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Join the FinanceAI network</p>
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Join the SpendWise network</p>
                             </div>
 
                             <form onSubmit={handleRegister} className="space-y-3.5">

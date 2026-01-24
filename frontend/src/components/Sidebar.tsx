@@ -55,7 +55,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen }: SidebarProps) => {
                         </div>
                         <div className="text-center">
                             <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary tracking-tighter">
-                                FinanceAI
+                                SpendWise
                             </h1>
                             <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold -mt-1 opacity-70">
                                 Smart Wealth
