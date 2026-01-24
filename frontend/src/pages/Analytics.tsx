@@ -113,21 +113,21 @@ const Analytics = () => {
 
     return (
         <div className="space-y-8 pb-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-3 rounded-2xl">
+                    <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                         <LottieIcon animationData={analyticsData} size={40} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Analytics</h1>
+                        <h1 className="text-3xl font-black text-slate-800 dark:text-white">Analytics</h1>
                         <p className="text-slate-500 dark:text-slate-400">Deep dive into your financial habits.</p>
                     </div>
                 </div>
                 <button
                     onClick={downloadExcel}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3.5 rounded-2xl font-black shadow-lg shadow-emerald-600/20 transition-all active:scale-95 text-sm uppercase tracking-widest"
                 >
-                    <Download size={20} />
+                    <Download size={18} />
                     Download Excel
                 </button>
             </div>

@@ -153,13 +153,13 @@ const Profile = () => {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 p-4">
-            <div className="flex items-center gap-4 mb-8">
-                <div className="bg-primary/10 p-3 rounded-2xl">
+        <div className="max-w-6xl mx-auto space-y-8 pb-10">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
+                <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                     <LottieIcon animationData={profileData} size={40} />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Profile</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white">Profile</h1>
                     <p className="text-slate-500 dark:text-slate-400">Manage your personal information</p>
                 </div>
             </div>

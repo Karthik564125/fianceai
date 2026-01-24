@@ -81,37 +81,41 @@ const Dashboard = () => {
         fetchDashboardData();
     }, [user?.uid]);
 
-    if (loading) return <div className="text-white p-12">Loading Dashboard...</div>;
+    if (loading) return (
+        <div className="flex justify-center items-center h-[50vh]">
+            <div className="animate-pulse text-white font-bold">Loading Dashboard...</div>
+        </div>
+    );
 
     return (
         <div className="pb-10">
-            <div className="mb-8 flex items-center gap-4">
-                <div className="bg-primary/10 p-3 rounded-2xl">
+            <div className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-4">
+                <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                     <LottieIcon animationData={homeData} size={48} />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Dashboard</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white">Dashboard</h1>
                     <p className="text-slate-500 dark:text-slate-400">Welcome! Here's your financial overview.</p>
                 </div>
             </div>
 
             {/* Insights */}
             {data?.insights?.length > 0 && (
-                <div className="mb-8 space-y-2">
+                <div className="mb-8 space-y-3">
                     {data.insights.map((insight: any, i: number) => (
-                        <div key={i} className={`p-4 rounded-xl flex items-center gap-3 border transition-all ${insight.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500 font-bold' :
+                        <div key={i} className={`p-4 rounded-2xl flex items-center gap-3 border transition-all ${insight.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500 font-bold' :
                             insight.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' :
                                 'bg-emerald-500/10 border-emerald-500/20 text-emerald-200'
                             }`}>
-                            <AlertTriangle size={20} />
-                            <span>{insight.message}</span>
+                            <AlertTriangle size={20} className="shrink-0" />
+                            <span className="text-sm md:text-base">{insight.message}</span>
                         </div>
                     ))}
                 </div>
             )}
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
                 <StatCard icon={Wallet} title="Total Income" value={`₹${(data?.summary?.totalIncome || 0).toLocaleString()}`} color="text-emerald-400" subtext="All Time" />
                 <StatCard
                     icon={TrendingDown}
@@ -125,30 +129,32 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Activity */}
-            <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Recent Expenses</h3>
-                <table className="w-full">
-                    <thead>
-                        <tr className="text-left text-slate-400 text-sm border-b border-slate-700">
-                            <th className="pb-3 pl-2">Category</th>
-                            <th className="pb-3">Description</th>
-                            <th className="pb-3 px-2 text-right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data?.recentExpenses?.length > 0 ? (
-                            data.recentExpenses.map((expense: any) => (
-                                <tr key={expense.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30">
-                                    <td className="py-4 pl-2 font-medium text-slate-200">{expense.category}</td>
-                                    <td className="py-4 text-slate-400">{expense.description || "-"}</td>
-                                    <td className="py-4 px-2 text-right font-bold text-white">-₹{expense.amount}</td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr><td colSpan={3} className="py-8 text-center text-slate-500">No recent expenses found.</td></tr>
-                        )}
-                    </tbody>
-                </table>
+            <div className="glass-card rounded-3xl p-6 border border-slate-700/50">
+                <h3 className="text-xl font-bold text-white mb-4">Recent Expenses</h3>
+                <div className="overflow-x-auto -mx-2 pl-2">
+                    <table className="w-full min-w-[500px]">
+                        <thead>
+                            <tr className="text-left text-slate-400 text-xs uppercase tracking-widest border-b border-slate-700/50">
+                                <th className="pb-3 pl-2">Category</th>
+                                <th className="pb-3">Description</th>
+                                <th className="pb-3 px-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data?.recentExpenses?.length > 0 ? (
+                                data.recentExpenses.map((expense: any) => (
+                                    <tr key={expense.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
+                                        <td className="py-4 pl-2 font-black text-slate-200">{expense.category}</td>
+                                        <td className="py-4 text-slate-400 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{expense.description || "-"}</td>
+                                        <td className="py-4 px-2 text-right font-black text-white">-₹{expense.amount.toLocaleString()}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr><td colSpan={3} className="py-12 text-center text-slate-500">No recent expenses found.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

@@ -104,24 +104,24 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 md:p-6 relative overflow-hidden overflow-y-auto">
             {/* Background Decor */}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900 to-slate-950 -z-10" />
-            <div className="absolute top-[-10%] left-[-5%] w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-700" />
+            <div className="absolute top-[-10%] left-[-5%] w-64 md:w-96 h-64 md:h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-64 md:w-96 h-64 md:h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-700" />
 
             {/* Header with Animation */}
-            <div className="text-center mb-12 z-10">
-                <div className="w-32 h-32 mx-auto mb-4">
-                    <LottieIcon animationData={mainData} size={150} />
+            <div className="text-center mb-8 md:mb-12 z-10 pt-10 md:pt-0">
+                <div className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-4">
+                    <LottieIcon animationData={mainData} size={120} />
                 </div>
-                <h1 className="text-5xl font-black bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-2">
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-2">
                     FinanceAI
                 </h1>
-                <p className="text-slate-400 font-medium tracking-wide uppercase text-xs">Smart Wealth Management Portfolio</p>
+                <p className="text-slate-400 font-bold tracking-[0.1em] md:tracking-wide uppercase text-[10px] md:text-xs">Smart Wealth Management Portfolio</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full max-w-7xl z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 w-full max-w-7xl z-10 pb-10">
                 {/* Left: Login */}
                 <motion.div
                     initial={{ opacity: 0, x: -30 }}

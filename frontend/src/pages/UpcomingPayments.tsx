@@ -121,14 +121,14 @@ const UpcomingPayments = () => {
     );
 
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center">
+        <div className="space-y-8 pb-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-3 rounded-2xl">
+                    <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                         <LottieIcon animationData={upcomingData} size={40} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Upcoming</h1>
+                        <h1 className="text-3xl font-black text-white">Upcoming</h1>
                         <p className="text-slate-400">Never miss a payment again.</p>
                     </div>
                 </div>
@@ -138,7 +138,7 @@ const UpcomingPayments = () => {
                         setFormData({ title: "", amount: "", date: "", category: "Food" });
                         setShowModal(true);
                     }}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
                 >
                     <Plus size={20} /> Add Payment
                 </button>

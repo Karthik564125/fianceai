@@ -106,15 +106,14 @@ const Income = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-8">
-                {/* ... existing header */}
+        <div className="pb-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <div className="flex items-center gap-4">
-                    <div className="bg-teal-500/10 p-3 rounded-2xl">
+                    <div className="bg-emerald-500/10 p-3 rounded-2xl shrink-0">
                         <LottieIcon animationData={incomeData} size={40} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Income</h1>
+                        <h1 className="text-3xl font-black text-slate-800 dark:text-white">Income</h1>
                         <p className="text-slate-500 dark:text-slate-400">Track your earnings and revenue.</p>
                     </div>
                 </div>
@@ -124,75 +123,80 @@ const Income = () => {
                         setFormData({ amount: "", source: "Salary", date: "", note: "" });
                         setShowModal(true);
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-black shadow-lg shadow-emerald-600/20"
                 >
                     <Plus size={20} /> Add Income
                 </button>
             </div>
 
             {loading ? (
-                <div className="flex justify-center p-12">
-                    <Loader className="animate-spin text-emerald-500" size={40} />
+                <div className="flex justify-center flex-col items-center p-20 gap-4">
+                    <Loader className="animate-spin text-emerald-500" size={48} />
+                    <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Loading Income</p>
                 </div>
             ) : incomes.length === 0 ? (
-                <div className="glass-card p-12 text-center rounded-3xl">
-                    <Wallet size={64} className="mx-auto text-emerald-500/50 mb-4" />
-                    <h3 className="text-xl font-bold text-white">No Income Added</h3>
-                    <p className="text-slate-400 mt-2">Start tracking your earnings by adding a new income source.</p>
+                <div className="glass-card p-12 md:p-20 text-center rounded-[2.5rem] border border-slate-700/50">
+                    <div className="w-20 h-20 bg-emerald-500/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Wallet size={40} className="text-emerald-500/50" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white">No Income Added</h3>
+                    <p className="text-slate-400 mt-2 max-w-sm mx-auto">Start tracking your earnings by adding a new income source. Watch your balance grow!</p>
                 </div>
             ) : (
-                <div className="glass-card overflow-hidden rounded-2xl">
-                    <table className="w-full">
-                        <thead className="bg-slate-800/50 text-slate-400 text-left text-sm uppercase tracking-wider">
-                            <tr>
-                                <th className="py-4 pl-6 font-medium">Source</th>
-                                <th className="py-4 font-medium">Description</th>
-                                <th className="py-4 font-medium">Date</th>
-                                <th className="py-4 pr-6 text-right font-medium">Amount</th>
-                                <th className="py-4 pr-6 text-right font-medium">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-700/50">
-                            {incomes.map((income) => (
-                                <tr key={income.id} className="hover:bg-slate-800/30 transition-colors group">
-                                    <td className="py-4 pl-6 font-medium text-slate-200 flex items-center gap-3">
-                                        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-                                            <Wallet size={18} />
-                                        </div>
-                                        {income.source}
-                                    </td>
-                                    <td className="py-4 text-slate-400">{income.note || "-"}</td>
-                                    <td className="py-4 text-slate-400">
-                                        <div className="flex items-center gap-2">
-                                            <Calendar size={14} />
-                                            {new Date(income.date).toLocaleDateString()}
-                                        </div>
-                                    </td>
-                                    <td className="py-4 pr-6 text-right font-bold text-emerald-400 text-lg">
-                                        +₹{income.amount}
-                                    </td>
-                                    <td className="py-4 pr-6 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => handleEdit(income)}
-                                                className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
-                                                title="Edit Income"
-                                            >
-                                                <Pencil size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteId(income.id)}
-                                                className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                                                title="Delete Income"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
+                <div className="glass-card overflow-hidden rounded-3xl border border-slate-700/50">
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[700px]">
+                            <thead className="bg-slate-800/50 text-slate-400 text-left text-xs uppercase tracking-widest">
+                                <tr>
+                                    <th className="py-5 pl-8 font-black">Source</th>
+                                    <th className="py-5 font-black">Description</th>
+                                    <th className="py-5 font-black">Date</th>
+                                    <th className="py-5 pr-8 text-right font-black">Amount</th>
+                                    <th className="py-5 pr-8 text-right font-black">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700/50">
+                                {incomes.map((income) => (
+                                    <tr key={income.id} className="hover:bg-slate-800/30 transition-colors group">
+                                        <td className="py-4 pl-6 font-medium text-slate-200 flex items-center gap-3">
+                                            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                                <Wallet size={18} />
+                                            </div>
+                                            {income.source}
+                                        </td>
+                                        <td className="py-4 text-slate-400">{income.note || "-"}</td>
+                                        <td className="py-4 text-slate-400">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar size={14} />
+                                                {new Date(income.date).toLocaleDateString()}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 pr-6 text-right font-bold text-emerald-400 text-lg">
+                                            +₹{income.amount}
+                                        </td>
+                                        <td className="py-4 pr-6 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(income)}
+                                                    className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                                                    title="Edit Income"
+                                                >
+                                                    <Pencil size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteId(income.id)}
+                                                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                    title="Delete Income"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
