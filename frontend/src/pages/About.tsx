@@ -86,7 +86,7 @@ const About = () => {
             <section className="text-center py-10">
                 <h2 className="text-2xl font-bold text-white mb-6">Built for the future of finance.</h2>
                 <div className="flex items-center justify-center gap-2 text-slate-500 text-sm font-medium">
-                    <Heart size={16} className="text-red-500" /> Made by FinanceAI Team
+                    <Heart size={16} className="text-red-500" /> Made by <a href="https://karthik-portfolio-blond.vercel.app/" target="_blank" className="text-white hover:text-primary transition-colors underline decoration-primary/50 underline-offset-4">Karthik</a>
                 </div>
             </section>
         </div>
